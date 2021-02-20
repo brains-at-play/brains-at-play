@@ -2,11 +2,19 @@ let connectToggle;
 let disconnectToggle;
 let museToggle;
 
-let margin = 100;
+let margin = 25;
+let signalWidth = 25
 let ballPos;
 let ballSize = 50;
+let movementSize = 5;
 let centersX;
 let centersY;
+let jump = false;
+let tJump = 100; // ms
+let jumpSize = 50;
+let ease;
+let t;
+let baseY;
 
 
 setup = () => {
@@ -26,7 +34,8 @@ setup = () => {
   game = new brainsatplay.Game('template')
   game.newGame('blink')
   game.simulate(1)
-  ballPos = [windowWidth/2, windowHeight/2]
+  baseY = windowHeight/2;
+  ballPos = [windowWidth/2, baseY]
 
   museToggle.mousePressed(async () => {
     await game.bluetooth.devices['muse'].connect()
@@ -58,9 +67,6 @@ draw = () => {
     background(0);
     // Update Voltage Buffers
     game.update();
-
-    centersX = [windowWidth/4, 3*windowWidth/4]
-    centersY = [3*windowHeight/4, 3*windowHeight/4]
   
     // Get Voltage Amplitude
     noStroke()
@@ -70,33 +76,39 @@ draw = () => {
     textSize(25)
     let brain = game.brains[game.info.access].get(game.me.username)
     let [leftBlink, rightBlink] = brain.blink()
-    let contactQuality = brain.contactQuality()
+    let contactQuality = brain.contactQuality(brain.blink.threshold,brain.blink.duration)
 
     // Move Ball
-    if (contactQuality[contactQuality.length-2] > 0){
-      if (ballPos[0] < windowWidth-ballSize/2 - margin){
-        ballPos[0] += (rightBlink-leftBlink);
+    // right
+    if (ballPos[0] < windowWidth-ballSize/2 - margin){
+      ballPos[0] += rightBlink*movementSize;
+      if (rightBlink) {
+        text('right',3*windowWidth/4,windowHeight/4);
       }
     }
-    if (rightBlink){
-      text('right',3*windowWidth/4,windowHeight/4)
-    }
 
-    if (contactQuality[contactQuality.length-1] > 0){
+    // left
       if (ballPos[0] > ballSize/2 + margin){
-        ballPos[0] -= (leftBlink-rightBlink);
+        ballPos[0] -= leftBlink*movementSize;
+        if (leftBlink) {
+          text('left',windowWidth/4,windowHeight/4);
+        }
       }
-    }
-    if (leftBlink){
-      text('left',windowWidth/4,windowHeight/4);
-    }
 
+    // up'
     if (leftBlink && rightBlink){
-      ballPos[1]++
+      jump = true;
+      t = Date.now()
+    } else if (jump === true && (Date.now() - t) > tJump){
+      jump = false
     }
     
+    ballPos[1] = baseY - jump*jumpSize;
+
     // Draw Signal Quality
-    let voltageNorm = brain.getVoltage([],true);
+    let voltageNorm = brain.getVoltage();
+    let voltageScaling = -0.02
+
     let ind;
     brain.usedChannels.forEach((channelDict) => {
       let flag = false
@@ -111,8 +123,9 @@ draw = () => {
 
       if (flag){
         let bufferNorm = voltageNorm[channelDict.index]
-        let voltageScaling = 50
-        let signalWidth = 200
+        bufferNorm = bufferNorm.slice(bufferNorm.length-brain.blink.duration)
+        centersX = [ballPos[0] - signalWidth - margin, ballPos[0] + signalWidth + margin]
+        centersY = [ballPos[1], ballPos[1]]    
         
     // Colored Line
     stroke(
@@ -128,6 +141,13 @@ draw = () => {
        centersY[ind] + voltageScaling*bufferNorm[sample+1]
            )   
     }
+
+    stroke(255)
+    line(centersX[ind] - signalWidth/2, 
+       centersY[ind] + 1*voltageScaling*brain.blink.threshold,
+       centersX[ind] + signalWidth/2, 
+       centersY[ind] + 1*voltageScaling*brain.blink.threshold
+      )
   }
   })
 }

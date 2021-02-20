@@ -855,6 +855,8 @@ class Brain {
         this.channelNames = []
         this.samplerate = 200;
         this.data = {}
+        this.blink.threshold = 500 // uV
+        this.blink.duration = 50 // samples
 
         if (channelNames === undefined){
                 channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
@@ -872,7 +874,7 @@ class Brain {
             }
         })
 
-        this.bufferSize = 500 // Samples
+        this.bufferSize = 1000 // Samples
         this.buffers = {
             voltage: Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
                 return Array(this.bufferSize).fill(0)
@@ -1086,6 +1088,7 @@ class Brain {
                 }
             })
 
+            // NOTE: How to keep this...
             // if (relative) {
             //     bandpower = this.stdDev(bandpower)
             // }
@@ -1117,29 +1120,29 @@ class Brain {
         let rightChannels = ['Af8'] // Muse Right
         let sideChannels = [leftChannels,rightChannels]
         let blinks = [false,false]
-        let threshold = 250;
+        let quality = this.contactQuality(this.blink.threshold,this.blink.duration)
 
         sideChannels.forEach((channels,ind) => {
                 if (this.channelNames.includes(...channels)){
-                    let buffer = this.buffers.voltage[this.usedChannels[this.channelNames.indexOf(...channels)].index]
-                    let lastTwenty = buffer.slice(buffer.length-20)
-                    let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
-                    blinks[ind] = max > threshold
+                    let channelInd = this.usedChannels[this.channelNames.indexOf(...channels)].index
+                    let buffer = this.buffers.voltage[channelInd]
+                    let lastTwenty = buffer.slice(buffer.length-this.blink.duration)
+                    let max = Math.max(...lastTwenty)//.map(v => Math.abs(v)))
+                    blinks[ind] = (max > this.blink.threshold) * (quality[channelInd] > 0)
                 }
             })
         return blinks
     }
 
-    contactQuality(){
-    
-    let threshold = 100;
-    let quality = Array.from({length: Object.keys(this.eegCoordinates).length}, e => NaN);
-    let voltage = this.getVoltage();
-    this.usedChannels.forEach((channelDict) => {
-        let buffer = voltage[channelDict.index]
-        let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length
-        quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / threshold))
-    })
+    contactQuality(threshold=100,sizeSlice=this.bufferSize){
+        let quality = Array.from({length: Object.keys(this.eegCoordinates).length}, e => NaN);
+        let voltage = this.getVoltage();
+        this.usedChannels.forEach((channelDict) => {
+            let buffer = voltage[channelDict.index]
+            buffer = buffer.slice(buffer.length-sizeSlice);
+            let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length
+            quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / threshold))
+        })
     return quality
     }
 }
