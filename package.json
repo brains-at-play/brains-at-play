@@ -27,6 +27,7 @@
     "express-session": "^1.17.1",
     "fast-csv": "^2.5.0",
     "fili": "^2.0.3",
+    "fs": "^0.0.1-security",
     "http-errors": "~1.6.3",
     "https": "^1.0.0",
     "mongodb": "^3.6.2",
