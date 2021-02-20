@@ -859,8 +859,8 @@ class Brain {
         this.blink.duration = 50 // samples
 
         if (channelNames === undefined){
-                channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
-                // 'Fz,C3,Cz,C4,Pz,PO7,Oz,PO8,F5,F7,F3,F1,F2,F4,F6,F8' // OpenBCI
+            channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
+            // 'Fz,C3,Cz,C4,Pz,PO7,Oz,PO8,F5,F7,F3,F1,F2,F4,F6,F8' // OpenBCI
         }
 
         channelNames = channelNames.toLowerCase().split(',')

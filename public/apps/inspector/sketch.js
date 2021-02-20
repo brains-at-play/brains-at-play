@@ -72,8 +72,8 @@ draw = () => {
     // Get Voltage Amplitude
     let brain = game.brains[game.info.access].get(game.me.username)
      if (brain !== undefined){
-      let voltage = brain.getVoltage();
-    // let voltage = brain.getVoltage([0.1,100]);
+      // let voltage = brain.getVoltage();
+    let voltage = brain.getVoltage([0.1,100]);
     brain.usedChannels.forEach((channelDict,ind) => {
         let [x, y, z] = brain.eegCoordinates[channelDict.name]
         
@@ -103,9 +103,9 @@ stroke(
 
     for (let sample = 0; sample < buffer.length; sample++){
        line(centerX + (signalWidth*(sample/buffer.length) - signalWidth/2), 
-            centerY + voltageScaling*buffer[sample],
+            centerY - voltageScaling*buffer[sample],
             centerX + (signalWidth*((sample+1)/buffer.length) - signalWidth/2), 
-            centerY + voltageScaling*buffer[sample+1]
+            centerY - voltageScaling*buffer[sample+1]
            )   
     }
     
