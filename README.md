@@ -74,10 +74,10 @@ python stream.py
 ```
 
 ##  Examples
-### [Brains@Play Project Template](https://brainsatplay.com/docs/examples/template) 
+### [Brains@Play Project Template](https://brainsatplay.com/template) 
 The Brains@Play Project Template uses p5.js to illustrate the basic functionality of the Brains@Play API. We include it in this repository for you to kickstart your game development! 
 
-### [Brainstorm](https://brainsatplay.com/docs/examples/brainstorm) 
+### [Brainstorm](https://brainsatplay.com/brainstorm) 
 
 Brainstorm is a web-based BCI game that computes, visualizes, and promotes the synchronization of brains across geographic, political, and social barriers. To generate public discussion about the ethical, legal, and social implications of emerging commercial devices to monitor brain activity, Brainstorm was be showcased at [Livewire: A Stimulating Night of Neurotechnology](https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&s_type=&s_genre=)—a USC Visions and Voices event combining neuroscience, neuroethics, and interactive media for participatory technology design.
 
