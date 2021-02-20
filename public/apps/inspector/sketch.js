@@ -27,7 +27,7 @@ setup = () => {
   // Brains@Play Setup
   game = new brainsatplay.Game('template')
   game.newGame('inspector')
-  game.simulate(1)//,[[100]],[[5]])
+  game.simulate(1,[[100]],[[10]])
 
   museToggle.mousePressed(async () => {
     await game.bluetooth.devices['muse'].connect()

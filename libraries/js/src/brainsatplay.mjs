@@ -853,7 +853,7 @@ class Brain {
         this.eegCoordinates = eegCoordinates
         this.usedChannels = []
         this.channelNames = []
-        this.samplerate = 0;
+        this.samplerate = 200;
         this.data = {}
 
         if (channelNames === undefined){
@@ -950,12 +950,12 @@ class Brain {
             this.data[field] = data[field]
         })
 
-        let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
-        if (timeElapsed !== 0){
-            this.samplerate = this.buffers.time[this.usedChannels[0].index].length / timeElapsed
-        } else {
-            this.samplerate = 0
-        }
+        // let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
+        // if (timeElapsed !== 0){
+        //     this.samplerate = this.buffers.time[this.usedChannels[0].index].length / timeElapsed
+        // } else {
+        //     this.samplerate = 0
+        // }
 
     }
 
@@ -973,7 +973,7 @@ class Brain {
         }
     }
 
-    getMetric(metricName,relative=false,filter=[]){
+    async getMetric(metricName,relative=false,filter=[]){
             let dict = {};
             // Derive Channel Readouts
             if (metricName === 'power') {
@@ -1082,13 +1082,13 @@ class Brain {
             let bandpower = new Array(Object.keys(this.eegCoordinates).length).fill(NaN);
             voltage.forEach((channelData,ind) => {
                 if (!channelData.includes(NaN)){
-                    bandpower[ind] = bci.bandpower(channelData, this.samplerate, band, {relative: true});
+                    bandpower[ind] = bci.bandpower(channelData, this.samplerate, band, {relative: relative});
                 }
             })
 
-            if (relative) {
-                bandpower = this.stdDev(bandpower)
-            }
+            // if (relative) {
+            //     bandpower = this.stdDev(bandpower)
+            // }
             return bandpower
     }
 
@@ -1117,13 +1117,14 @@ class Brain {
         let rightChannels = ['Af8'] // Muse Right
         let sideChannels = [leftChannels,rightChannels]
         let blinks = [false,false]
+        let threshold = 250;
 
         sideChannels.forEach((channels,ind) => {
                 if (this.channelNames.includes(...channels)){
                     let buffer = this.buffers.voltage[this.usedChannels[this.channelNames.indexOf(...channels)].index]
                     let lastTwenty = buffer.slice(buffer.length-20)
                     let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
-                    blinks[ind] = max > 50
+                    blinks[ind] = max > threshold
                 }
             })
         return blinks
@@ -1137,7 +1138,7 @@ class Brain {
     this.usedChannels.forEach((channelDict) => {
         let buffer = voltage[channelDict.index]
         let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length
-        quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / 100))
+        quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / threshold))
     })
     return quality
     }

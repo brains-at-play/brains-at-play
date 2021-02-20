@@ -21,14 +21,12 @@ setup = () => {
   // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
   museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
   // disconnectToggle.hide()
-  centersX = [windowWidth/4, 3*windowWidth/4]
-  centersY = [3*windowHeight/4, 3*windowHeight/4]
 
   // Brains@Play Setup
   game = new brainsatplay.Game('template')
   game.newGame('blink')
   game.simulate(1)
-  ballPos = windowWidth/2
+  ballPos = [windowWidth/2, windowHeight/2]
 
   museToggle.mousePressed(async () => {
     await game.bluetooth.devices['muse'].connect()
@@ -60,6 +58,9 @@ draw = () => {
     background(0);
     // Update Voltage Buffers
     game.update();
+
+    centersX = [windowWidth/4, 3*windowWidth/4]
+    centersY = [3*windowHeight/4, 3*windowHeight/4]
   
     // Get Voltage Amplitude
     noStroke()
@@ -69,36 +70,41 @@ draw = () => {
     textSize(25)
     let brain = game.brains[game.info.access].get(game.me.username)
     let [leftBlink, rightBlink] = brain.blink()
-    
+    let contactQuality = brain.contactQuality()
+
     // Move Ball
-    if (ballPos < windowWidth-ballSize/2 - margin){
-      ballPos += rightBlink;
+    if (contactQuality[contactQuality.length-2] > 0){
+      if (ballPos[0] < windowWidth-ballSize/2 - margin){
+        ballPos[0] += (rightBlink-leftBlink);
+      }
     }
     if (rightBlink){
       text('right',3*windowWidth/4,windowHeight/4)
     }
 
-    if (ballPos > ballSize/2 + margin){
-      ballPos -= leftBlink;
+    if (contactQuality[contactQuality.length-1] > 0){
+      if (ballPos[0] > ballSize/2 + margin){
+        ballPos[0] -= (leftBlink-rightBlink);
+      }
     }
     if (leftBlink){
       text('left',windowWidth/4,windowHeight/4);
     }
+
+    if (leftBlink && rightBlink){
+      ballPos[1]++
+    }
     
     // Draw Signal Quality
     let voltageNorm = brain.getVoltage([],true);
-    let voltage = brain.getVoltage();
-    let contactQuality = brain.contactQuality()
-    console.log(contactQuality)
     let ind;
-    // let voltage = brain.getVoltage([0.1,100]);
     brain.usedChannels.forEach((channelDict) => {
       let flag = false
 
-      if (channelDict.name == 'Af7'){
+      if (channelDict.name === 'Af7'){
         flag = true;
         ind = 0; // left
-      } else if (channelDict.name == 'Af8'){
+      } else if (channelDict.name === 'Af8'){
         flag = true;
         ind = 1; // right
       }
@@ -110,8 +116,8 @@ draw = () => {
         
     // Colored Line
     stroke(
-      255*(contactQuality[channelDict.index]), // Red
-      255*(1-contactQuality[channelDict.index]), // Green
+      255*(1-contactQuality[channelDict.index]), // Red
+      255*(contactQuality[channelDict.index]), // Green
         0
       )
 
@@ -135,7 +141,7 @@ draw = () => {
       stroke(255)
     }
     
-    ellipse(ballPos, windowHeight/2,50)
+    ellipse(ballPos[0], ballPos[1],50)
 
   }
 
