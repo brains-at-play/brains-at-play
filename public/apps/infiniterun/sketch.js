@@ -26,7 +26,7 @@
     
     
       // Brains@Play Setup
-      game = new brainsatplay.Game('template')
+      game = new brainsatplay.Game('infiniterun')
       game.simulate(2);
       
       museToggle.mousePressed(async () => {

@@ -22,17 +22,11 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  // connectToggle = createButton('Connect to Server');
   museToggle = createButton('Connect Muse');
-  // disconnectToggle = createButton('Disconnect');
-  // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-  // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
   museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-  // disconnectToggle.hide()
 
   // Brains@Play Setup
-  game = new brainsatplay.Game('template')
-  game.newGame('blink')
+  game = new brainsatplay.Game('blink')
   game.simulate(1)
   ballSize = Math.min(windowHeight/4, windowWidth/4)
   baseY = windowHeight/2;
@@ -42,20 +36,6 @@ setup = () => {
     await game.bluetooth.devices['muse'].connect()
     game.connectBluetoothDevice(brainsatplay.museClient)
   });
-
-  // connectToggle.mousePressed(() => {
-  //   game.connect({
-  //     'guestaccess': true
-  //   })
-  //   disconnectToggle.show()
-  //   connectToggle.hide()
-  // });
-
-  // disconnectToggle.mousePressed(() => {
-  //   game.disconnect()
-  //   disconnectToggle.hide()
-  //   connectToggle.show()
-  // })
 }
 draw = () => {
   
@@ -163,7 +143,5 @@ draw = () => {
 
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-      // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
       museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
     }
