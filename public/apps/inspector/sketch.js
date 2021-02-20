@@ -60,7 +60,7 @@ draw = () => {
     background(0);
   noStroke()
   fill(50,50,50)
-  let headWidth = windowWidth / 2
+  let headWidth = Math.min(windowHeight/2, windowWidth/2)
   ellipse(windowWidth / 2, windowHeight / 2 + 20, headWidth,headWidth+headWidth*(1/6)) // Head
   ellipse(windowWidth / 2, windowHeight / 2 - (headWidth+headWidth*(1/6) - 50)/2, headWidth/10) // Nose
   ellipse(windowWidth / 2 + 75, windowHeight / 2 + 20, headWidth/10,headWidth/5) // Left Ear

@@ -5,7 +5,7 @@ let museToggle;
 let margin = 25;
 let signalWidth = 25
 let ballPos;
-let ballSize = 50;
+let ballSize;
 let movementSize = 5;
 let centersX;
 let centersY;
@@ -34,6 +34,7 @@ setup = () => {
   game = new brainsatplay.Game('template')
   game.newGame('blink')
   game.simulate(1)
+  ballSize = Math.min(windowHeight/4, windowWidth/4)
   baseY = windowHeight/2;
   ballPos = [windowWidth/2, baseY]
 
@@ -82,17 +83,11 @@ draw = () => {
     // right
     if (ballPos[0] < windowWidth-ballSize/2 - margin){
       ballPos[0] += rightBlink*movementSize;
-      if (rightBlink) {
-        text('right',3*windowWidth/4,windowHeight/4);
-      }
     }
 
     // left
       if (ballPos[0] > ballSize/2 + margin){
         ballPos[0] -= leftBlink*movementSize;
-        if (leftBlink) {
-          text('left',windowWidth/4,windowHeight/4);
-        }
       }
 
     // up'
@@ -124,7 +119,7 @@ draw = () => {
       if (flag){
         let bufferNorm = voltageNorm[channelDict.index]
         bufferNorm = bufferNorm.slice(bufferNorm.length-brain.blink.duration)
-        centersX = [ballPos[0] - signalWidth - margin, ballPos[0] + signalWidth + margin]
+        centersX = [ballPos[0] - signalWidth - margin - ballSize/2, ballPos[0] + signalWidth + margin + ballSize/2]
         centersY = [ballPos[1], ballPos[1]]    
         
     // Colored Line
@@ -161,7 +156,7 @@ draw = () => {
       stroke(255)
     }
     
-    ellipse(ballPos[0], ballPos[1],50)
+    ellipse(ballPos[0], ballPos[1],ballSize)
 
   }
 
