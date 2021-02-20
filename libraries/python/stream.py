@@ -26,27 +26,27 @@ async def main():
     # Mac: '/dev/cu.usbserial-________'
     # Windows: 'COM_'
                     
-    URL = 'http://localhost/'#'https://brainsatplay.azurewebsites.net'
+    URL = 'https://brainsatplay.azurewebsites.net' #'http://localhost/'#
     # Local: 'http://localhost'
     # Deployed Game: 'https://brainsatplay.azurewebsites.net'
 
-    LOGIN_DATA = { 'guestaccess': True }#,'guestId': '9e90cd6f-35a9-45b2-9d7b-229968275025' }
+    LOGIN_DATA = { 'guestaccess': True } #,'guestId': 'c16cb823-4c10-4cb6-820d-58895002b957' }
     # Guests: { 'guestaccess': True, 'guestId': '********'}
     # Authenticated Users: { 'username': '********', 'password': '********' }
     
-    GAME = 'template'
+    GAME = 'brainstorm'
     # Current Games: template, brainstorm
 
-    ACCESS = 'public'
+    ACCESS = 'private'
     # Anyone Can Access Data (required to play games): 'public'
     # Only Interfaces with Same USERID Access Data: 'private'
 
     DATA_STREAM = ['brainflow', 'arbitrary']
-  # Stream raw voltages using Brainflow: 'brainflow'
-    # Extend this array with arbitrary fields to pass to the front end
+    # Stream raw voltages using Brainflow: 'brainflow'
+      # Extend this array with arbitrary fields to pass to the front end
 
-  def arbitraryEventFunction(brain): 
-    # Use this callback function to pass arbitrary data to the front end (corresponding to fields in DATA_STREAM)
+    def arbitraryEventFunction(brain): 
+      # Use this callback function to pass arbitrary data to the front end (corresponding to fields in DATA_STREAM)
       brain.passData('arbitrary', math.sin(time.time()))
       
     brain = asyncio.create_task(beginStream(BOARD, PORT, URL, LOGIN_DATA, GAME, ACCESS, DATA_STREAM,arbitraryEventFunction))

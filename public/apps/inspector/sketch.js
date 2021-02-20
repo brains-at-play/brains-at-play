@@ -4,7 +4,6 @@ let museToggle;
 
 let margin = 100;
 let colors = []
-let signalWidth = 50;
 
 setup = () => {
 
@@ -16,38 +15,38 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  connectToggle = createButton('Connect to Server');
+  // connectToggle = createButton('Connect to Server');
   museToggle = createButton('Connect Muse');
-  disconnectToggle = createButton('Disconnect');
-  connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-  disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
+  // disconnectToggle = createButton('Disconnect');
+  // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
+  // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
   museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-  disconnectToggle.hide()
+  // disconnectToggle.hide()
 
 
   // Brains@Play Setup
   game = new brainsatplay.Game('template')
-  game.newGame('template')
-  game.simulate(1);
+  game.newGame('inspector')
+  game.simulate(1)//,[[100]],[[5]])
 
   museToggle.mousePressed(async () => {
     await game.bluetooth.devices['muse'].connect()
     game.connectBluetoothDevice(brainsatplay.museClient)
   });
 
-  connectToggle.mousePressed(() => {
-    game.connect({
-      'guestaccess': true
-    })
-    disconnectToggle.show()
-    connectToggle.hide()
-  });
+  // connectToggle.mousePressed(() => {
+  //   game.connect({
+  //     'guestaccess': true
+  //   })
+  //   disconnectToggle.show()
+  //   connectToggle.hide()
+  // });
 
-  disconnectToggle.mousePressed(() => {
-    game.disconnect()
-    disconnectToggle.hide()
-    connectToggle.show()
-  })
+  // disconnectToggle.mousePressed(() => {
+  //   game.disconnect()
+  //   disconnectToggle.hide()
+  //   connectToggle.show()
+  // })
 }
 
 draw = () => {
@@ -61,30 +60,30 @@ draw = () => {
     background(0);
   noStroke()
   fill(50,50,50)
-  ellipse(windowWidth / 2, windowHeight / 2 + 20, 150,175) // Head
-  ellipse(windowWidth / 2, windowHeight / 2 - 66, 15) // Nose
-  ellipse(windowWidth / 2 + 75, windowHeight / 2 + 20, 15,30) // Left Ear
-  ellipse(windowWidth / 2 - 75, windowHeight / 2 + 20, 15,30) // Right Ear
+  let headWidth = windowWidth / 2
+  ellipse(windowWidth / 2, windowHeight / 2 + 20, headWidth,headWidth+headWidth*(1/6)) // Head
+  ellipse(windowWidth / 2, windowHeight / 2 - (headWidth+headWidth*(1/6) - 50)/2, headWidth/10) // Nose
+  ellipse(windowWidth / 2 + 75, windowHeight / 2 + 20, headWidth/10,headWidth/5) // Left Ear
+  ellipse(windowWidth / 2 - 75, windowHeight / 2 + 20, headWidth/10,headWidth/5) // Right Ear
 
     // Update Voltage Buffers
     game.update();
   
-    // Draw Voltage Power (STD)
-
+    // Get Voltage Amplitude
     let brain = game.brains[game.info.access].get(game.me.username)
      if (brain !== undefined){
-    let power = brain.getMetric('power')
-    let voltage = brain.getVoltage();
+      let voltage = brain.getVoltage();
+    // let voltage = brain.getVoltage([0.1,100]);
     brain.usedChannels.forEach((channelDict,ind) => {
         let [x, y, z] = brain.eegCoordinates[channelDict.name]
         
-        let centerX = x + (windowWidth / 2)
-        let centerY = -y + windowHeight / 2
-        let size = 15
-
-        power.channels[channelDict.index]/100
-       
-let buffer = voltage[channelDict.index]
+        let centerX = x*(headWidth/150) + (windowWidth / 2)
+        let centerY = -y*(headWidth/150) + windowHeight / 2
+               
+        let buffer = voltage[channelDict.index]
+        let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length;
+        let voltageScaling = (headWidth/150)/10
+        let signalWidth = 50*(1+voltageScaling)
 
 // Zero Line
 stroke(255,255,255)
@@ -97,26 +96,26 @@ line(centerX - (signalWidth+10)/2,
 
   // Colored Line
 stroke(
-  255*(power.channels[channelDict.index]/100), // Red
-  255*(1-power.channels[channelDict.index]/100), // Green
+  255*(aveAmp/100), // Red
+  255*(1-aveAmp/100), // Green
     0
   )
 
     for (let sample = 0; sample < buffer.length; sample++){
        line(centerX + (signalWidth*(sample/buffer.length) - signalWidth/2), 
-            centerY + buffer[sample],
+            centerY + voltageScaling*buffer[sample],
             centerX + (signalWidth*((sample+1)/buffer.length) - signalWidth/2), 
-            centerY + buffer[sample+1]
-           )
-              
-    }      
-
+            centerY + voltageScaling*buffer[sample+1]
+           )   
+    }
+    
     // Text Label
+    noStroke()
     textSize(10)
     fill('white')
-    text(power.channels[channelDict.index].toFixed(1) + ' uV',
+    text(aveAmp.toFixed(1) + ' uV',
       centerX,
-      centerY + 40
+      centerY + (40*(1+voltageScaling))
          )       
        })
      }
@@ -125,7 +124,7 @@ stroke(
 
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-      disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
+      // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
+      // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
       museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
     }

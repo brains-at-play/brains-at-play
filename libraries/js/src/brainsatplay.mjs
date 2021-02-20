@@ -1,5 +1,6 @@
 import muse from "muse-js";
 import bci from "bcijs";
+import Fili from 'fili';
 
 export class Game {
     constructor(gameName = 'untitled') {
@@ -66,9 +67,13 @@ export class Game {
 
         this.simulation = {
             generate: false,
-            baseFrequency: 1,
-            sampleRate: 250,
-            duration: 1.0
+            samplerate: 200, // samples/s
+            duration: 0.24, // s 
+            t: Date.now(),
+            parameters: {
+                frequency: [],
+                amplitudes: []
+            }
         }
 
         this.metrics = {
@@ -78,7 +83,6 @@ export class Game {
             }
         }
 
-        this.simulation.generatedSamples = Math.round(this.simulation.sampleRate * this.simulation.duration)
         this.initializeSession()
         this.setUpdateMessage()
     }
@@ -123,7 +127,7 @@ export class Game {
         return Array.from( this.brains[this.info.access].keys())
     }
 
-    simulate(count) {
+    simulate(count, amplitudes,frequencies) {
         if (!this.bluetooth.connected){
             this.add('me')
         }
@@ -140,6 +144,16 @@ export class Game {
         }
         this.simulation.generate = true;
         this.info.simulated = true;
+        if (amplitudes===undefined){
+            this.simulation.parameters.frequencies = Array.from({length: count}, e =>Array.from({length: 5}, e => Math.random() * 50))
+        } else {
+            this.simulation.parameters.frequencies = frequencies
+        }
+        if (frequencies===undefined) {
+            this.simulation.parameters.amplitudes = Array.from({length: count}, e =>Array(5).fill(100))
+        } else {
+            this.simulation.parameters.amplitudes = amplitudes
+        }
     }
 
 
@@ -188,47 +202,31 @@ export class Game {
             }
         })
 
-        signal = signal.map(point => point/signal.length)
+        signal = signal.map(point => point/fl)
 
         return signal
     }
 
     generateVoltageStream() {
-        let n = 5;
-        let usernames = this.getUsernames()
-        usernames.forEach((username,ind) => {
-            let user = this.brains['public'].get(username)
-            if (this.me.username !== username || !this.bluetooth.connected){
-            for (let channel = 0; channel < user.channelNames.length; channel++) {
-                this.simulation.buffers.voltage[ind][channel].push(...this.generateSignal(new Array(n).fill(1000), Array.from({length: n}, e => Math.random() * 50), this.simulation.sampleRate, this.simulation.duration, Array.from({length: n}, e => Math.random() * 2*Math.PI)));
+        let userInd = 0
+        this.brains[this.info.access].forEach((user) => {
+            if (this.me.username !== user.username || !this.bluetooth.connected){
+                user.channelNames.forEach((channelName) => {
+                    let samples = this.generateSignal(this.simulation.parameters.amplitudes[userInd], this.simulation.parameters.frequencies[userInd], this.simulation.samplerate, this.simulation.duration, Array.from({length: this.simulation.parameters.frequencies[userInd].length}, e => Math.random() * 2*Math.PI))
+                    user.loadData({signal:[samples],time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
+                })
             }
-        }
+            userInd++
         })
-
-        let startTime = Date.now()
-        let cardinality = (1 / this.simulation.baseFrequency) * this.simulation.sampleRate;
-        let step = (1 / this.simulation.baseFrequency) / (cardinality - 1);
-        for (let i = 0; i < cardinality; i++) {
-            this.simulation.buffers.time.push(startTime + (step * i));
-        }
     }
 
     update() {
         // Generate signal if specified
         if (this.simulation.generate) {
-            if (this.simulation.generatedSamples === Math.round(this.simulation.sampleRate * this.simulation.duration)) {
+            if ((Date.now() - this.simulation.t) > this.simulation.duration*1000) {
                 this.generateVoltageStream()
-                this.simulation.generatedSamples = 0;
-            } else {
-                this.simulation.generatedSamples += 1
+                this.simulation.t = Date.now()
             }
-            let usernames = this.getUsernames()
-            usernames.forEach((username,ind) => {
-                this.brains[this.info.access].get(username).loadData({
-                    signal: this.simulation.buffers.voltage[ind].map((channel) => [channel.shift()]),
-                    time: [this.simulation.buffers.time.shift()]
-                })
-            })
         }
         this.setUpdateMessage()
         this.updateSession()
@@ -450,7 +448,7 @@ export class Game {
                     this.connection.ws.send(message)
                 } else {
                     if (this.brains[this.info.access].get(this.me.username)){
-                    this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:[r.timestamp],electrode:r.electrode})
+                    this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode})
                     }
                 }
             }
@@ -851,11 +849,11 @@ export class Game {
 
 class Brain {
     constructor(userId, channelNames){
-        this.id = userId;
+        this.username = userId;
         this.eegCoordinates = eegCoordinates
         this.usedChannels = []
         this.channelNames = []
-        this.samplerate = 125;
+        this.samplerate = 0;
         this.data = {}
 
         if (channelNames === undefined){
@@ -881,7 +879,11 @@ class Brain {
             } else {
                 return [NaN]
             }}),
-            time: Array.from({length: Object.keys(this.eegCoordinates).length}, e => [])
+            time: Array.from({length: Object.keys(this.eegCoordinates).length}, e => {if (this.channelNames.includes(e)){
+                return Array(this.bufferSize).fill(0)
+            } else {
+                return [NaN]
+            }})
         }
 
         this.initializeStorage()
@@ -904,7 +906,6 @@ class Brain {
 
         let signal = data.signal
         let time = data.time
-
 
         // drop data if undefined or NaN
         signal = signal.filter((arr) => {if (!arr.includes(undefined) && !arr.includes(NaN)){return arr}})
@@ -948,23 +949,37 @@ class Brain {
         arbitraryFields.forEach((field) =>{
             this.data[field] = data[field]
         })
+
+        let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
+        if (timeElapsed !== 0){
+            this.samplerate = this.buffers.time[this.usedChannels[0].index].length / timeElapsed
+        } else {
+            this.samplerate = 0
+        }
+
     }
 
-    getVoltage(normalize=false){
+    getVoltage(normalize=false,filter=[]){
+        let voltage;
+        voltage = this.removeDCOffset(this.buffers.voltage)
+        if (Array.isArray(filter) && filter.length === 2){
+        voltage = this.bandpass(voltage,filter[0],filter[1])
+        }
+
         if (normalize){
-            return this.normalize(this.buffers.voltage)
+            return this.normalize(voltage)
         } else {
-            return this.buffers.voltage
+            return voltage
         }
     }
 
-    getMetric(metricName,relative=false){
+    getMetric(metricName,relative=false,filter=[]){
             let dict = {};
             // Derive Channel Readouts
             if (metricName === 'power') {
-                dict.channels = this.power(relative)
+                dict.channels = this.power(filter,relative)
             } else if (['delta', 'theta', 'alpha', 'beta', 'gamma'].includes(metricName)) {
-                dict.channels = this.bandpower(metricName, relative)
+                dict.channels = this.bandpower(metricName, filter, relative)
             }
 
             // Get Values of Interest
@@ -1036,11 +1051,18 @@ class Brain {
     }
     
 
-    power(relative = false) {
+    power(filter=[], relative = false) {
+
+            let voltage;
+            voltage = this.removeDCOffset(this.buffers.voltage)
+            if (Array.isArray(filter) && filter.length === 2){
+                voltage = this.bandpass(voltage,filter[0],filter[1])
+            }
+        
 
             let power = new Array(Object.keys(this.eegCoordinates).length);
-            this.buffers.voltage.forEach((channelData,ind) => {
-                power[ind] = channelData.reduce((acc, cur) => acc + ((cur * cur) / 2), 0) / channelData.length
+            voltage.forEach((channelData,ind) => {
+                power[ind] = channelData.reduce((acc, cur) => acc + (Math.pow(cur, 2) / 2), 0) / channelData.length
             })
 
             if (relative) {
@@ -1051,9 +1073,14 @@ class Brain {
     }
 
     bandpower(band, relative = false) {
+            let voltage;
+            voltage = this.removeDCOffset(this.buffers.voltage)
+            if (Array.isArray(filter) && filter.length === 2){
+                voltage = this.bandpass(voltage,filter[0],filter[1])
+            }
+
             let bandpower = new Array(Object.keys(this.eegCoordinates).length).fill(NaN);
-            this.buffers.voltage.forEach((channelData,ind) => {
-                // NOTE: Not actually the correct samplerate
+            voltage.forEach((channelData,ind) => {
                 if (!channelData.includes(NaN)){
                     bandpower[ind] = bci.bandpower(channelData, this.samplerate, band, {relative: true});
                 }
@@ -1063,6 +1090,56 @@ class Brain {
                 bandpower = this.stdDev(bandpower)
             }
             return bandpower
+    }
+
+    bandpass(data,lowFreq=0.1,highFreq=100){
+        let filterOrder = 128;
+        let firCalculator = new Fili.FirCoeffs();
+        let coeffs = firCalculator.bandpass({order: filterOrder, Fs: this.samplerate, F1: lowFreq, F2: highFreq});
+        let filter = new Fili.FirFilter(coeffs);
+        data.filter(channelData => channelData != [NaN])
+        let channels = bci.transpose(data);
+        channels = data.map(signal => filter.simulate(signal).slice(filterOrder));
+        data = bci.transpose(channels);
+        return data
+    }
+
+    removeDCOffset(voltages){
+        voltages = voltages.map(buffer => {
+            let mean = buffer.reduce((a, b) => a + b, 0) / buffer.length;
+            return buffer.map(point => point-mean)
+        })
+        return voltages
+    }
+
+    blink() {
+        let leftChannels = ['Af7'] // Muse Left
+        let rightChannels = ['Af8'] // Muse Right
+        let sideChannels = [leftChannels,rightChannels]
+        let blinks = [false,false]
+
+        sideChannels.forEach((channels,ind) => {
+                if (this.channelNames.includes(...channels)){
+                    let buffer = this.buffers.voltage[this.usedChannels[this.channelNames.indexOf(...channels)].index]
+                    let lastTwenty = buffer.slice(buffer.length-20)
+                    let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
+                    blinks[ind] = max > 50
+                }
+            })
+        return blinks
+    }
+
+    contactQuality(){
+    
+    let threshold = 100;
+    let quality = Array.from({length: Object.keys(this.eegCoordinates).length}, e => NaN);
+    let voltage = this.getVoltage();
+    this.usedChannels.forEach((channelDict) => {
+        let buffer = voltage[channelDict.index]
+        let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length
+        quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / 100))
+    })
+    return quality
     }
 }
 

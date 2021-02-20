@@ -52,3 +52,10 @@ PERFORMANCE OF THIS SOFTWARE.
  * Copyright (c) 2015, Robert Eisele (robert@xarg.org)
  * Dual licensed under the MIT or GPL Version 2 licenses.
  **/
+
+/**
+ * @name    fili
+ * @version 2.0.3 | December 13th 2018
+ * @author  Florian Markert
+ * @license MIT
+ */
