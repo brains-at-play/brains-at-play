@@ -16,6 +16,10 @@ A full-stack framework for developing web-based BCI applications.
 ``` 
 ### Running a Local Server
 1. Install [NPM](https://www.npmjs.com/) and [Node](https://nodejs.org/en/).
+2. If you have npm installed already, make sure to update it to the latest version using:
+```bash
+npm update -g npm
+```
 2. In the project folder, install the required Node modules by typing this into your command line:
 ```bash
 npm install
