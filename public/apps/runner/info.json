@@ -1,0 +1,10 @@
+{
+    "name": "Project Template",
+    "author": "Brains@Play",
+    "website": "https://brainsatplay.com",
+    "description": "Create your own brain-responsive web app.",
+    "links": {
+        "github": "https://github.com/brainsatplay/brainsatplay",
+        "p5": "https://editor.p5js.org/gflynn/sketches/7XhHs2xnX"
+    }
+}

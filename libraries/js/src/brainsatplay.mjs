@@ -131,13 +131,11 @@ export class Game {
 
     simulate(count, amplitudes,frequencies) {
         if (!this.bluetooth.connected && !this.getUsernames().includes(this.me.username)){
-            console.log('adding me')
             this.add('me') 
         }
         for (let i = 0; i < count-1; i++) {
             this.add('other' + (i+1));
         }
-        this.info.brains = count;
         this.getMyIndex()
         this.updateUsedChannels()
 
@@ -451,12 +449,12 @@ export class Game {
     async connectBluetoothDevice(connectedClient, type='muse'){
 
         // only allow connection if not sending data to server
-        if (!(this.connection.status === 1)){
+        if (!(this.connection.status)){
             if (type === 'muse'){
         this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
         await this.bluetooth.devices['muse'].start();
         this.remove('me')
-        if (this.connection.status === 1){
+        if (this.connection.status){
             this.add('me', this.bluetooth.channelNames)
         } else {
             this.add(this.me.username, this.bluetooth.channelNames)
@@ -466,7 +464,7 @@ export class Game {
         this.bluetooth.devices[type].eegReadings.subscribe(r => {
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
-                if ((this.connection.status === 1)) {
+                if ((this.connection.status)) {
                     let data = new Array(me.numChannels)
                     data[r.electrode] = r.samples;
                     let message = {
@@ -607,7 +605,13 @@ export class Game {
         
                 connection.onclose = () => {
                     this.connection.status = false;
-                    // this.initialize()
+                    Object.keys(this.brains).forEach(access => {
+                        this.brains[access].forEach((brain,username) => {
+                            if (username !== this.me.username){
+                                this.remove(username,access)
+                            }
+                        })
+                    })
                     this.simulate(this.simulation.n)
                     this.getMyIndex()
                 };
@@ -629,7 +633,7 @@ export class Game {
     //
 
     send(command,dict) {
-        if (this.connection.status === 1){
+        if (this.connection.status){
         if (command === 'initializeBrains') {
             this.connection.ws.send(JSON.stringify({'destination': 'initializeBrains', 'public': this.info.access === 'public'}));
             this.setUpdateMessage({destination: 'opened'})
