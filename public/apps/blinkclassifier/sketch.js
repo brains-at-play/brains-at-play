@@ -1,3 +1,5 @@
+//const { connect } = require("mongodb");
+
   let connectToggle;
   let disconnectToggle;
   let museToggle;
@@ -9,20 +11,14 @@
   let rightSidebar = 300;
   let chooseEllipses = [];
   let scaleEEG = 30;
-  
-  let settings = {
-    name: 'blink',
-    subset: 1/objects.length,
-    trials: 10,
-    iti: 2000, // milliseconds
-    numSamples: 100, //500,
-    eventDuration: 1000, // milliseconds
-    objects: objects
-  }
-  
+  let allTrialData = [];
+  let connectTogglePressed = false;
+
   setup = () => {
     // P5 Setup
     createCanvas(windowWidth, windowHeight);
+
+    // Buttons
     connectToggle = createButton('Start Session');
     museToggle = createButton('Connect Muse');
     disconnectToggle = createButton('End Session');
@@ -30,6 +26,42 @@
     disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
     museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
     disconnectToggle.hide()
+
+    // Set default settings (inputs)
+    settings = {
+      name: 'blink',
+      subset: 1/objects.length,
+      trials: 10,
+      iti: 2000, // milliseconds
+      numSamples: 100, //500,
+      eventDuration: 1000, // milliseconds
+      objects: objects
+    }
+
+    // Inputs
+    color('white')
+    inputWidth = 50;
+    labelWidth = 150;
+    labelSize = 'h5';
+    inputTrials = createInput(str(settings.trials));                                            
+    inputTrials.size(inputWidth);
+    labelTrials = createElement(labelSize, 'Trials');
+    labelTrials.size(labelWidth);
+    inputIti = createInput(str(settings.iti));                                             
+    inputIti.size(inputWidth);
+    labelIti = createElement(labelSize, 'Iti');
+    labelIti.size(labelWidth);
+    inputNumSamples = createInput(str(settings.numSamples));                                       
+    inputNumSamples.size(inputWidth);
+    labelNumSamples = createElement(labelSize, 'Number of Samples');      
+    labelNumSamples.size(labelWidth);
+    inputEventDuration = createInput(str(settings.eventDuration));                                   
+    inputEventDuration.size(inputWidth);
+    labelEventDuration = createElement(labelSize, 'Event Duration');          
+    labelEventDuration.size(labelWidth);
+    positionInputs();
+
+    
   
     // Brains@Play Setup
     game = new brainsatplay.Game('p300')
@@ -45,16 +77,21 @@
           game.initializeSession(settings)
           disconnectToggle.show()
           connectToggle.hide()
+          connectTogglePressed = true;
+          console.log("connect toggle pressed!");
       });
   
       disconnectToggle.mousePressed(() => {
           game.initializeSession()
           disconnectToggle.hide()
           connectToggle.show()
+          console.log("disconnect toggle pressed!");
+          recordDataEndLogic();
       })
   }
   
-  draw = () => {  
+  draw = () => {
+      
     background(0);
     noStroke()
   
@@ -64,13 +101,24 @@
       museToggle.show()
   }
   
+    // Set settings based on user's input
+    settings = {
+      name: 'blink',
+      subset: 1/objects.length,
+      trials: Number(inputTrials.value()),
+      iti: Number(inputIti.value()), // milliseconds
+      numSamples: Number(inputNumSamples.value()), // 500
+      eventDuration: Number(inputEventDuration.value()), // milliseconds
+      objects: objects
+    }
+
     // Update Voltage Buffers and Derived Variables
     game.update();
   
     fill('white')
     textStyle(BOLD)
     textSize(15)
-    console.log(game.session.currentEventState.chosen)
+    //console.log(game.session.currentEventState.chosen)
     if (game.session.currentEventState.chosen[0]){
       text(game.session.currentEventState.chosen[0],windowWidth/2, windowHeight/2)
     }
@@ -80,6 +128,11 @@
   
     text('State: ' + game.session.state, (windowWidth - rightSidebar) + margin, margin+25)
   
+    // If trials are done, stop recording data
+    if(game.session.state == "done")
+      recordDataEndLogic();
+
+
     for (let trial = 0; trial < game.session.numTrials; trial++){
       noStroke()
       text('Trial ' + trial, 
@@ -95,16 +148,40 @@
           margin + 90 + 50*(trial+1) - (trialData[ind+1]/scaleEEG),
         )
       })
+      if(connectTogglePressed)
+        allTrialData.push(trialData);
     }
   
     stroke('white')
-    line((windowWidth - rightSidebar),0,(windowWidth - rightSidebar),windowHeight)
+    line((windowWidth - rightSidebar - inputTrials.width - 50),0,(windowWidth - rightSidebar - inputTrials.width - 50),windowHeight)
   
   }
   
+  positionInputs = () => {
+    inputTrials.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputTrials.width, windowHeight-(50+inputTrials.height)*4);
+    labelTrials.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputTrials.width, windowHeight-(50+inputTrials.height)*4 - 25);
+    inputIti.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputIti.width,windowHeight-(50+inputTrials.height)*3);
+    labelIti.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputIti.width,windowHeight-(50+inputTrials.height)*3 - 25);
+    inputNumSamples.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputNumSamples.width, windowHeight-(50+inputTrials.height)*2);
+    labelNumSamples.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputNumSamples.width, windowHeight-(50+inputTrials.height)*2 - 25);
+    inputEventDuration.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputEventDuration.width, windowHeight-50-inputTrials.height);
+    labelEventDuration.position(windowWidth-50-connectToggle.width-inputTrials.width-25-inputEventDuration.width, windowHeight-50-inputTrials.height - 25);
+  }
+
   windowResized = () => {  
       resizeCanvas(windowWidth, windowHeight);
       connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
       disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
       museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
+      positionInputs();
+  }
+
+  recordDataEndLogic = () => {
+    if(connectTogglePressed) {
+      console.log(allTrialData)
+      save(allTrialData, "session_"+Date.now());
+      console.log("allTrialData length is -> "+allTrialData.length);
+    }  
+    allTrialData = [];
+    connectTogglePressed = false;
   }

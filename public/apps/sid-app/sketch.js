@@ -12,7 +12,7 @@
 
   // Set classfier name and load/save toggle (load -> true, save -> false)
   let classifierName = 'lda';
-  let loadOrSaveToggle = true;
+  let loadOrSaveToggle = false;
 
   // Toggle to use filter for bandpass
   let useFilter = false;
