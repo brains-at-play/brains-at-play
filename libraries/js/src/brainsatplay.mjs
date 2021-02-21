@@ -446,17 +446,17 @@ export class Game {
     //
     //
 
-    async connectBluetoothDevice(connectedClient, type='muse'){
+    async connectBluetoothDevice(type='muse'){
 
         // only allow connection if not sending data to server
         if (!(this.connection.status)){
             if (type === 'muse'){
         this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
         await this.bluetooth.devices['muse'].start();
-        let prevData = this.brains[this.info.access].get('me').data
-        this.remove('me')
+        let prevData = this.brains[this.info.access].get(this.me.username).data
+        this.remove(this.me.username)
         if (this.connection.status){
-            this.add('me', this.bluetooth.channelNames)
+            this.add(this.me.username, this.bluetooth.channelNames)
         } else {
             this.add(this.me.username, this.bluetooth.channelNames)
         }

@@ -28,7 +28,7 @@
 
       museToggle.mousePressed(async () => {
           await game.bluetooth.devices['muse'].connect()
-          game.connectBluetoothDevice(brainsatplay.museClient)
+          game.connectBluetoothDevice()
       });
 
       connectToggle.mousePressed(() => {
@@ -79,7 +79,13 @@
         ellipse(marg-ellipseRad/2, marg + (2.5*ellipseRad)*userInd-ellipseRad/2, ellipseRad)
         
         // Concentration Indicator
-        fill(0,0,user.data.concentration.toFixed(3)*255*2)
+        if (user.data.concentration){
+          concentration = user.data.concentration.toFixed(3);
+        } else {
+          concentration = 0;
+        }
+
+        fill(0,0,concentration*255*2)
         ellipse(marg, marg + (2.5*ellipseRad)*userInd, 2*ellipseRad)
 
         // User Text
