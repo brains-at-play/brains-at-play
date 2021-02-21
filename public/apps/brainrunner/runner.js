@@ -66,7 +66,6 @@ function checkCoins() {
     coinPosition.setFromMatrixPosition( coin.matrixWorld );
     if (coinPosition.distanceTo(player.position) <= 10 && !coinsCollected.includes(coin)) {
       coinsCollected.push(coin);
-      console.log(" Coins collected: " + coinsCollected.length);
     }
   });
 }
@@ -83,13 +82,14 @@ function onKeyDown(event) {
 };
 
 function animate() {
-
   let brain = game.brains[game.info.access].get(game.me.username)
-  let [leftBlink, rightBlink] = brain.blink()
-  if (leftBlink && player.position.x != -(floorWidth - margin) / 2) {
-    player.position.x -= (floorWidth - margin) / 2;
-  } else if (rightBlink && player.position.x != (floorWidth - margin) / 2) {
-    player.position.x += (floorWidth - margin) / 2;
+  if(brain){
+    let [leftBlink, rightBlink] = brain.blink()
+    if (leftBlink && player.position.x != -(floorWidth - margin) / 2) {
+      player.position.x -= (floorWidth - margin) / 2;
+    } else if (rightBlink && player.position.x != (floorWidth - margin) / 2) {
+      player.position.x += (floorWidth - margin) / 2;
+    }
   }
 
   // brain.getMetric('alpha').then((alpha) =>{

@@ -50,6 +50,8 @@
     
     draw = () => {
 
+      clear()
+
       if (game.bluetooth.connected && ['flex','block'].includes(museToggle.style('display'))){
           museToggle.hide()
       }
@@ -63,17 +65,29 @@
       let ellipseRad = width/8
       game.brains[game.info.access].forEach( async (user,username) => {
         let concentration = await user.getMetric('alpha')
-        user.setData({concentration:concentration.average})
-        user.setData({points:coinsCollected.length})
-        fill(0,0,user.data.concentration.toFixed(3))
-        ellipse(marg, marg + (2.5*ellipseRad)*userInd, 2*ellipseRad)
-        if (user.data.active){
-          fill('white')
-          textAlign(LEFT);
-          text(username, marg + ellipseRad + 10, marg + (2.5*ellipseRad)*userInd)
-          textAlign(CENTER);
-          text(user.data.points, marg, marg + (2.5*ellipseRad)*userInd)
+        if (username == game.me.username){
+          user.setData({concentration:concentration.average})
+          user.setData({points:coinsCollected.length})
         }
+
+        // Active Indicator
+        if (user.data.active){
+          fill(0,255,50)
+        } else {
+          fill(255,50,0)
+        }
+        ellipse(marg-ellipseRad/2, marg + (2.5*ellipseRad)*userInd-ellipseRad/2, ellipseRad)
+        
+        // Concentration Indicator
+        fill(0,0,user.data.concentration.toFixed(3)*255*2)
+        ellipse(marg, marg + (2.5*ellipseRad)*userInd, 2*ellipseRad)
+
+        // User Text
+        fill('white')
+        textAlign(LEFT);
+        text(username, marg + ellipseRad + 10, marg + (2.5*ellipseRad)*userInd)
+        textAlign(CENTER);
+        text(user.data.points, marg, marg + (2.5*ellipseRad)*userInd)
         userInd++
       })
     }

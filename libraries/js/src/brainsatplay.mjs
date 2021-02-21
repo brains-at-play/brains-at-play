@@ -453,12 +453,14 @@ export class Game {
             if (type === 'muse'){
         this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
         await this.bluetooth.devices['muse'].start();
+        let prevData = this.brains[this.info.access].get('me').data
         this.remove('me')
         if (this.connection.status){
             this.add('me', this.bluetooth.channelNames)
         } else {
             this.add(this.me.username, this.bluetooth.channelNames)
         }
+        this.brains[this.info.access].get(this.me.username).data = prevData
         this.updateBrainRoutine()
         this.bluetooth.connected = true;
         this.bluetooth.devices[type].eegReadings.subscribe(r => {
@@ -1020,7 +1022,7 @@ class Brain {
         }
     }
 
-    async getMetric(metricName,relative=false,filter=[]){
+    async getMetric(metricName,relative,filter=[]){
             let dict = {};
             // Derive Channel Readouts
             if (metricName === 'power') {
@@ -1119,7 +1121,7 @@ class Brain {
             return power
     }
 
-    bandpower(band, filter,relative=false) {
+    bandpower(band, filter,relative=true) {
             let voltage;
             voltage = this.removeDCOffset(this.buffers.voltage)
             if (Array.isArray(filter) && filter.length === 2){
