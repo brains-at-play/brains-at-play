@@ -901,6 +901,7 @@ class Brain {
         this.data = {}
         this.blink.threshold = 500 // uV
         this.blink.duration = 50 // samples
+        this.blink.lastBlink = 0;
 
         if (channelNames === undefined){
             channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
@@ -1118,7 +1119,7 @@ class Brain {
             return power
     }
 
-    bandpower(band, relative = false) {
+    bandpower(band, filter,relative=false) {
             let voltage;
             voltage = this.removeDCOffset(this.buffers.voltage)
             if (Array.isArray(filter) && filter.length === 2){
@@ -1166,6 +1167,7 @@ class Brain {
         let blinks = [false,false]
         let quality = this.contactQuality(this.blink.threshold,this.blink.duration)
 
+        if (Date.now() - this.blink.lastBlink > 2*this.blink.duration){
         sideChannels.forEach((channels,ind) => {
                 if (this.channelNames.includes(...channels)){
                     let channelInd = this.usedChannels[this.channelNames.indexOf(...channels)].index
@@ -1175,6 +1177,11 @@ class Brain {
                     blinks[ind] = (max > this.blink.threshold) * (quality[channelInd] > 0)
                 }
             })
+            this.blink.lastBlink = Date.now()
+        } else {
+            blinks = [false, false]
+        }
+
         return blinks
     }
 

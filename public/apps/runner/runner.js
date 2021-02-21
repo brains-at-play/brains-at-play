@@ -4,7 +4,6 @@ const margin = 10;
 let coinUnit = 3;
 
 let coins = [];
-let coinsCollected = [];
 
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
@@ -84,9 +83,26 @@ function onKeyDown(event) {
 };
 
 function animate() {
+
+  let brain = game.brains[game.info.access].get(game.me.username)
+  let [leftBlink, rightBlink] = brain.blink()
+  if (leftBlink && player.position.x != -(floorWidth - margin) / 2) {
+    player.position.x -= (floorWidth - margin) / 2;
+  } else if (rightBlink && player.position.x != (floorWidth - margin) / 2) {
+    player.position.x += (floorWidth - margin) / 2;
+  }
+
+  // brain.getMetric('alpha').then((alpha) =>{
+  //   playerMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
+  // })
+
+
   checkCoins();
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
+
+
+  
 }
 
 generateCoins();

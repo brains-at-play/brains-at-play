@@ -32,7 +32,28 @@
                description = "Play a brain-controlled runner game."
                links = '{}'
     ></info-card>
+    <div id="p5Div" style="
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    background: transparent;
+    "></div>
+        <div id='threejsDiv'
+        style="
+    position: absolute;
+    top: 0;
+    left: 0;
+    "></div>
 
+    <script>
+      game = new brainsatplay.Game('blink')
+      game.simulate(1);
+      let coinsCollected = [];
+    </script>
+
+    <script src="p5.js"></script>
+    <script src="sketch.js"></script>
     <script type="text/javascript" src="three.js"></script>
     <script type="text/javascript" src="runner.js"></script>
 

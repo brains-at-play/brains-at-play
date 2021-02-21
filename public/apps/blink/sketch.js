@@ -59,6 +59,7 @@ draw = () => {
     textSize(25)
     let brain = game.brains[game.info.access].get(game.me.username)
     let [leftBlink, rightBlink] = brain.blink()
+    console.log(leftBlink, rightBlink)
     let contactQuality = brain.contactQuality(brain.blink.threshold,brain.blink.duration)
 
     // Move Ball
