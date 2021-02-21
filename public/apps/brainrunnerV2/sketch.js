@@ -19,8 +19,8 @@
   setup = () => {
 
       // Sound
-      song.setVolume()
-      song.play(0.5)
+      song.setVolume(0.5)
+      song.loop()
 
       // P5 Setup
       var c = createCanvas(windowWidth, windowHeight);
