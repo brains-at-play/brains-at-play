@@ -4,6 +4,13 @@
   let museToggle;
   let marg = 100;
   let key;
+  let sound;
+
+  preload = () => {
+    // "Bell, Candle Damper, A (H4n).wav" by InspectorJ (www.jshaw.co.uk) of Freesound.org
+    sound = loadSound('bell.wav');
+  }
+
 
   setup = () => {
 
@@ -64,6 +71,9 @@
         let concentration = await user.getMetric('alpha')
         if (username == game.me.username){
           user.setData({concentration:concentration.average})
+          if (user.data.points !== undefined && user.data.points < coinsCollected.length){
+            sound.play();
+          }
           user.setData({points:coinsCollected.length})
         }
 
