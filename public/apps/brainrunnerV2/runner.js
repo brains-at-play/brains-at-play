@@ -256,9 +256,9 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-setAlpha(alpha) {
+/*setAlpha(alpha) {
 
-}
+}*/
 
 function animate() {
   let brain = game.brains[game.info.access].get(game.me.username)
@@ -271,10 +271,10 @@ function animate() {
     }
   }
 
-   brain.getMetric('alpha').then((alpha) =>{
+   /*brain.getMetric('alpha').then((alpha) =>{
      setAlpha();
      //modelMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
-   })
+   })*/
 
   checkCoins();
 
