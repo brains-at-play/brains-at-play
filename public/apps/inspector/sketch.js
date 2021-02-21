@@ -15,13 +15,8 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  // connectToggle = createButton('Connect to Server');
   museToggle = createButton('Connect Muse');
-  // disconnectToggle = createButton('Disconnect');
-  // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-  // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
   museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-  // disconnectToggle.hide()
 
 
   // Brains@Play Setup
@@ -32,20 +27,6 @@ setup = () => {
     await game.bluetooth.devices['muse'].connect()
     game.connectBluetoothDevice(brainsatplay.museClient)
   });
-
-  // connectToggle.mousePressed(() => {
-  //   game.connect({
-  //     'guestaccess': true
-  //   })
-  //   disconnectToggle.show()
-  //   connectToggle.hide()
-  // });
-
-  // disconnectToggle.mousePressed(() => {
-  //   game.disconnect()
-  //   disconnectToggle.hide()
-  //   connectToggle.show()
-  // })
 }
 
 draw = () => {
@@ -71,8 +52,7 @@ draw = () => {
     // Get Voltage Amplitude
     let brain = game.brains[game.info.access].get(game.me.username)
      if (brain !== undefined){
-      // let voltage = brain.getVoltage();
-    let voltage = brain.getVoltage([0.1,100]);
+    let voltage = brain.getVoltage();
     brain.usedChannels.forEach((channelDict,ind) => {
         let [x, y, z] = brain.eegCoordinates[channelDict.name]
         
@@ -123,7 +103,5 @@ stroke(
 
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      // connectToggle.position(windowWidth - 25 - connectToggle.width, windowHeight - 125 - connectToggle.height);
-      // disconnectToggle.position(windowWidth - 25 - disconnectToggle.width, windowHeight - 125 - disconnectToggle.height);
       museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
     }

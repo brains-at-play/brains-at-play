@@ -37,6 +37,8 @@ setup = () => {
     game.connectBluetoothDevice(brainsatplay.museClient)
   });
 }
+
+
 draw = () => {
   
     if (game.bluetooth.connected) {
