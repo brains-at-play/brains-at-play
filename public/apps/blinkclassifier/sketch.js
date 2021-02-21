@@ -149,7 +149,7 @@
         )
       })
       if(connectTogglePressed)
-        allTrialData.push(trialData);
+        allTrialData.push(trialData.concat(game.session.currentEventState.chosen[0]));
     }
   
     stroke('white')
