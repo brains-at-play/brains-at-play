@@ -1,9 +1,11 @@
 import muse from "muse-js";
 import bci from "bcijs";
 import Fili from 'fili';
+import { copyFile } from "fs";
 
 export class Game {
     constructor(gameName = 'untitled') {
+        this.simulation = {}
         this.initialize()
         this.gameName = gameName;
         this.bluetooth = {
@@ -13,6 +15,7 @@ export class Game {
             connected: false,
             channelNames: [],
         }
+        this.simulation.n = 0;
     }
 
     initialize(ignoreMe=false) {
@@ -46,11 +49,12 @@ export class Game {
         this.commonChannelNames = [];
         this.connectionMessageBuffer = [];
 
-        if (!this.connection) {
+        if (this.connection === undefined || !(this.connection.status)) {
             this.connection = {}
             this.connection.ws = undefined
             this.connection.status = false
-
+        } 
+        if (!ignoreMe || this.me === undefined){
             this.me = {
                 username: 'me',
                 index: undefined,
@@ -58,23 +62,21 @@ export class Game {
         }
 
         this.info = {
-            interfaces: 0,
-            brains: 0,
+            interfaces: undefined,
+            brains: undefined,
             usernames: [],
             access: 'public',
             simulated: false
         }
 
-        this.simulation = {
-            generate: false,
-            samplerate: 200, // samples/s
-            duration: 0.24, // s 
-            t: Date.now(),
-            parameters: {
+        this.simulation.generate = false,
+        this.simulation.samplerate = 200, // samples/s
+        this.simulation.duration = 0.24, // s 
+        this.simulation.t = Date.now(),
+        this.simulation.parameters = {
                 frequency: [],
                 amplitudes: []
             }
-        }
 
         this.metrics = {
             synchrony: {
@@ -128,8 +130,9 @@ export class Game {
     }
 
     simulate(count, amplitudes,frequencies) {
-        if (!this.bluetooth.connected){
-            this.add('me')
+        if (!this.bluetooth.connected && !this.getUsernames().includes(this.me.username)){
+            console.log('adding me')
+            this.add('me') 
         }
         for (let i = 0; i < count-1; i++) {
             this.add('other' + (i+1));
@@ -143,17 +146,10 @@ export class Game {
             time: []
         }
         this.simulation.generate = true;
+        this.simulation.n = count;
         this.info.simulated = true;
-        if (amplitudes===undefined){
-            this.simulation.parameters.frequencies = Array.from({length: count}, e =>Array.from({length: 5}, e => Math.random() * 50))
-        } else {
-            this.simulation.parameters.frequencies = frequencies
-        }
-        if (frequencies===undefined) {
-            this.simulation.parameters.amplitudes = Array.from({length: count}, e =>Array(5).fill(100))
-        } else {
-            this.simulation.parameters.amplitudes = amplitudes
-        }
+        this.simulation.parameters.frequencies = frequencies
+        this.simulation.parameters.amplitudes = amplitudes
     }
 
 
@@ -209,10 +205,28 @@ export class Game {
 
     generateVoltageStream() {
         let userInd = 0
+        let n = 5
+        let freqs;
+        let amps;
         this.brains[this.info.access].forEach((user) => {
             if (this.me.username !== user.username || !this.bluetooth.connected){
                 user.channelNames.forEach((channelName) => {
-                    let samples = this.generateSignal(this.simulation.parameters.amplitudes[userInd], this.simulation.parameters.frequencies[userInd], this.simulation.samplerate, this.simulation.duration, Array.from({length: this.simulation.parameters.frequencies[userInd].length}, e => Math.random() * 2*Math.PI))
+
+                    // Generate frequencies if none are given by the user
+                    if (this.simulation.parameters.frequencies === undefined){
+                        freqs = Array.from({length: n}, e => Math.random() * 50)
+                    } else {
+                        freqs = this.simulation.parameters.frequencies[userInd]
+                    }
+
+                    // Generate amplitudes if none are given by the user
+                    if (this.simulation.parameters.amplitudes === undefined){
+                        amps = Array(n).fill(100)
+                    } else {
+                        amps = this.simulation.parameters.amplitudes[userInd]
+                    }
+
+                    let samples = this.generateSignal(amps, freqs, this.simulation.samplerate, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
                     user.loadData({signal:[samples],time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
                 })
             }
@@ -228,6 +242,19 @@ export class Game {
                 this.simulation.t = Date.now()
             }
         }
+
+        // Broadcast Data
+        this.send('bci',{
+            destination: 'bci', 
+            id: this.me.username,
+        'data': {signal:[],time:[]}
+        })
+
+        // Update Websocket Status
+        if (this.connection.ws !== undefined){
+            this.connection.status = this.connection.ws.readyState === 1
+        }
+
         this.setUpdateMessage()
         this.updateSession()
     }
@@ -422,11 +449,14 @@ export class Game {
     //
 
     async connectBluetoothDevice(connectedClient, type='muse'){
+
+        // only allow connection if not sending data to server
+        if (!(this.connection.status === 1)){
             if (type === 'muse'){
         this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
         await this.bluetooth.devices['muse'].start();
         this.remove('me')
-        if (this.connection.status){
+        if (this.connection.status === 1){
             this.add('me', this.bluetooth.channelNames)
         } else {
             this.add(this.me.username, this.bluetooth.channelNames)
@@ -436,7 +466,7 @@ export class Game {
         this.bluetooth.devices[type].eegReadings.subscribe(r => {
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
-                if ((this.connection.status)) {
+                if ((this.connection.status === 1)) {
                     let data = new Array(me.numChannels)
                     data[r.electrode] = r.samples;
                     let message = {
@@ -444,8 +474,7 @@ export class Game {
                         id: this.me.username,
                     'data': {signal:[r.samples],time:[r.timestamp],electrode:r.electrode}
                     }
-                    message = JSON.stringify(message)
-                    this.connection.ws.send(message)
+                    this.send('bci',message)
                 } else {
                     if (this.brains[this.info.access].get(this.me.username)){
                     this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode})
@@ -457,6 +486,9 @@ export class Game {
         else {
             console.error('No Bluetooth compatibility with devices of type: ' + type)
         }
+    } else {
+        console.error('Please connect your Muse before connecting to the server.')
+    }
     }
 
     //
@@ -485,7 +517,11 @@ export class Game {
         if (type==='interfaces'){
             cookies = [this.me.username, type, this.gameName]
         } else if (type==='bidirectional') {
-            cookies = [this.me.username,type,this.gameName,this.info.access,...this.bluetooth.channelNames.split(',')]
+            if (this.bluetooth.connected){
+                cookies = [this.me.username,type,this.gameName,this.info.access,...this.bluetooth.channelNames.split(',')]
+            } else {
+                cookies = [this.me.username,type,this.gameName,this.info.access,null]
+            }
         }
 
         if (this.url.protocol === 'http:') {
@@ -500,7 +536,7 @@ export class Game {
         this.connection.ws = connection
     }
 
-    setWebsocketMethods(connection=undefined, type='interfaces'){
+    setWebsocketMethods(connection=undefined){
         if (connection){
                 connection.onerror = () => {
                     this.setUpdateMessage({destination: 'error'})
@@ -508,11 +544,9 @@ export class Game {
                 };
         
                 connection.onopen = () => {
-                    this.initialize()
-                    this.send('initializeBrains')
-                    this.info.brains = undefined
-                    this.info.interfaces = undefined
                     this.connection.status = true
+                    this.initialize(true)
+                    this.send('initializeBrains')
                 };
         
                 connection.onmessage = (msg) => {
@@ -528,7 +562,6 @@ export class Game {
                         } else {
                             for (let newUser = 0; newUser < obj.nBrains; newUser++) {
                                 if (this.brains.public.get(obj.ids[newUser]) === undefined && obj.ids[newUser] !== undefined) {
-                                    console.log('added a brain',obj.ids[newUser])
                                     this.add(obj.ids[newUser], obj.channelNames[newUser])
                                 }
                             }
@@ -536,7 +569,11 @@ export class Game {
         
                         this.simulation.generate = false;
                         this.updateUsedChannels()
-                        this.info.interfaces = obj.nInterfaces;
+                        if (obj.nInterfaces === undefined){
+                            this.info.interfaces = 0;
+                        } else{
+                            this.info.interfaces = obj.nInterfaces;
+                        }
                         this.getMyIndex()
                         this.setUpdateMessage(obj)
                     } else if (obj.destination === 'brains') {
@@ -569,11 +606,9 @@ export class Game {
                 };
         
                 connection.onclose = () => {
+                    this.connection.status = false;
                     // this.initialize()
-                    this.connection.ws = undefined
-                    this.connection.status = false
-                    this.info.interfaces = undefined;
-                    this.simulate(2)
+                    this.simulate(this.simulation.n)
                     this.getMyIndex()
                 };
         }
@@ -584,14 +619,7 @@ export class Game {
 
         let resDict;
         resDict = await this.login(dict, url)
-
-        if (this.bluetooth.connected){
-            this.establishWebsocket('bidirectional')
-        } else {
-            this.establishWebsocket('interfaces')
-        }
-
-
+        this.establishWebsocket('bidirectional')
         return resDict
     }
     //
@@ -600,13 +628,25 @@ export class Game {
     //
     //
 
-    send(command) {
+    send(command,dict) {
+        if (this.connection.status === 1){
         if (command === 'initializeBrains') {
-            if (this.connection.status){
-            this.connection.ws.send(JSON.stringify({'destination': 'initializeBrains', 'public': false}));
+            this.connection.ws.send(JSON.stringify({'destination': 'initializeBrains', 'public': this.info.access === 'public'}));
             this.setUpdateMessage({destination: 'opened'})
+        } else if (command === 'bci'){
+            let reserved = ['voltage','time','electrode']
+            let me = this.brains[this.info.access].get(this.me.username)
+            if (me !== undefined){
+                Object.keys(me.data).forEach((key) => {
+                    if (!reserved.includes(key)){
+                        dict.data[key] = me.data[key]
+                    }
+                })
+                dict = JSON.stringify(dict)
+                this.connection.ws.send(dict)
             }
         }
+    }
     }
 
     checkURL(url) {
@@ -946,7 +986,7 @@ class Brain {
 
 
         let arbitraryFields = Object.keys(data)
-        arbitraryFields = arbitraryFields.filter(e => !['signal','time'].includes(e));
+        arbitraryFields = arbitraryFields.filter(e => !['signal','time','electrode'].includes(e));
 
         arbitraryFields.forEach((field) =>{
             this.data[field] = data[field]
@@ -1144,6 +1184,12 @@ class Brain {
             quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / threshold))
         })
     return quality
+    }
+
+    setData(dict){
+        Object.keys(dict).forEach(key => {
+            this.data[key] = dict[key]
+        })
     }
 }
 
