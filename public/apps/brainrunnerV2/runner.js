@@ -1,5 +1,4 @@
 import * as THREE from './build/three.module.js';
-
 import Stats from './libs/stats.module.js';
 import { GUI } from './libs/dat.gui.module.js';
 
@@ -10,28 +9,29 @@ let floorLength = 1000;
 let margin = 10;
 let coinUnit = 3;
 
+let stats, clock, gui, mixer, actions, activeAction, previousAction;
+let model, face;
+
 let coins = [];
 
 let scene = new THREE.Scene();
+scene.background = new THREE.Color( 0xe0e0e0 );
+//scene.fog = new THREE.Fog( 0xe0e0e0, 20, 100 );
 let camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
 camera.position.set(0, 10, 530);
 
-let renderer = new THREE.WebGLRenderer();
+
+let renderer = new THREE.WebGLRenderer( { antialias: true } );
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.outputEncoding = THREE.sRGBEncoding;
 document.body.appendChild(renderer.domElement);
 
 let floorGeometry = new THREE.BoxGeometry(floorWidth * 3, floorLength * 3, 1);
-let floorMaterial = new THREE.MeshBasicMaterial( { color: 0x7cfc00 } );
+let floorMaterial = new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } );
 let floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = 1.57;
 scene.add(floor);
-
-let playerGeometry = new THREE.BoxGeometry(2, 5, 2);
-let playerMaterial = new THREE.MeshBasicMaterial( { color: 0x0000ff } );
-let player = new THREE.Mesh(playerGeometry, playerMaterial);
-player.position.set(0, 5, 500);
-player.rotation.x = 0.5;
-scene.add(player);
 
 function Coin () {
   let laneSelection = Math.floor(Math.random() * 3);
@@ -71,88 +71,24 @@ function checkCoins() {
   coins.forEach(function(element, index) {
     coin = coins[index];
     coinPosition.setFromMatrixPosition( coin.matrixWorld );
-    if (coinPosition.distanceTo(player.position) <= 10 && !coinsCollected.includes(coin)) {
+    if (coinPosition.distanceTo(model.position) <= 5 && !coinsCollected.includes(coin)) {
+      coin.material.transparent = true;
+      coin.material.opacity = 0;
+      coin.visible = false;
       coinsCollected.push(coin);
     }
   });
 }
 
-document.addEventListener("keydown", onKeyDown, false);
-
-function onKeyDown(event) {
-  let key = event.key;
-  if (key == 'ArrowLeft' && player.position.x != -(floorWidth - margin) / 2) {
-    player.position.x -= (floorWidth - margin) / 2;
-  } else if (key == 'ArrowRight' && player.position.x != (floorWidth - margin) / 2) {
-    player.position.x += (floorWidth - margin) / 2;
-  }
-};
-
-window.addEventListener("resize", onWindowResize);
-
-function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-function animate() {
-  let brain = game.brains[game.info.access].get(game.me.username)
-  if(brain){
-    let [leftBlink, rightBlink] = brain.blink()
-    if (leftBlink && player.position.x != -(floorWidth - margin) / 2) {
-      player.position.x -= (floorWidth - margin) / 2;
-    } else if (rightBlink && player.position.x != (floorWidth - margin) / 2) {
-      player.position.x += (floorWidth - margin) / 2;
-    }
-  }
-
-  // brain.getMetric('alpha').then((alpha) =>{
-  //   playerMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
-  // })
-
-  checkCoins();
-
-  let dt = clock.getDelta();
-
-  if ( mixer ) mixer.update( dt );
-
-  requestAnimationFrame( animate );
-
-  renderer.render( scene, camera );
-
-  stats.update();
-}
-
-generateCoins();
 
 // Code for robot
 
-let container, stats, clock, gui, mixer, actions, activeAction, previousAction;
-let model, face;
-
 let api = { state: 'Walking' };
 
-init();
-animate();
-
 function init() {
-
-  container = document.createElement( 'div' );
-  document.body.appendChild( container );
-
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.25, 100 );
-  camera.position.set( - 5, 3, 10 );
-  camera.lookAt( new THREE.Vector3( 0, 2, 0 ) );
-
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color( 0xe0e0e0 );
-  scene.fog = new THREE.Fog( 0xe0e0e0, 20, 100 );
-
   clock = new THREE.Clock();
 
   // lights
-
   let hemiLight = new THREE.HemisphereLight( 0xffffff, 0x444444 );
   hemiLight.position.set( 0, 20, 0 );
   scene.add( hemiLight );
@@ -163,21 +99,18 @@ function init() {
 
   // ground
 
-  let mesh = new THREE.Mesh( new THREE.PlaneGeometry( 2000, 2000 ), new THREE.MeshPhongMaterial( { color: 0x999999, depthWrite: false } ) );
-  mesh.rotation.x = - Math.PI / 2;
-  scene.add( mesh );
-
-  let grid = new THREE.GridHelper( 200, 40, 0x000000, 0x000000 );
+  /*let grid = new THREE.GridHelper( 200, 40, 0x000000, 0x000000 );
   grid.material.opacity = 0.2;
   grid.material.transparent = true;
-  scene.add( grid );
+  scene.add( grid );*/
 
   // model
-
   let loader = new GLTFLoader();
   loader.load( 'models/RobotExpressive.glb', function ( gltf ) {
 
     model = gltf.scene;
+    model.position.set(0, 5, 500);
+    model.rotation.y = 3.14;
     scene.add( model );
 
     createGUI( model, gltf.animations );
@@ -185,21 +118,11 @@ function init() {
   }, undefined, function ( e ) {
 
     console.error( e );
-
   } );
-
-  renderer = new THREE.WebGLRenderer( { antialias: true } );
-  renderer.setPixelRatio( window.devicePixelRatio );
-  renderer.setSize( window.innerWidth, window.innerHeight );
-  renderer.outputEncoding = THREE.sRGBEncoding;
-  container.appendChild( renderer.domElement );
-
-  window.addEventListener( 'resize', onWindowResize );
 
   // stats
   stats = new Stats();
-  container.appendChild( stats.dom );
-
+  document.body.appendChild( stats.dom );
 }
 
 function createGUI( model, animations ) {
@@ -213,19 +136,15 @@ function createGUI( model, animations ) {
 
   actions = {};
 
-  for ( let i = 0; i < animations.length; i ++ ) {
-
+  for (let i = 0; i < animations.length; i ++) {
     let clip = animations[ i ];
     let action = mixer.clipAction( clip );
     actions[ clip.name ] = action;
 
     if ( emotes.indexOf( clip.name ) >= 0 || states.indexOf( clip.name ) >= 4 ) {
-
       action.clampWhenFinished = true;
       action.loop = THREE.LoopOnce;
-
     }
-
   }
 
   // states
@@ -240,7 +159,7 @@ function createGUI( model, animations ) {
 
   } );
 
-  statesFolder.open();
+  //statesFolder.open();
 
   // emotes
 
@@ -274,7 +193,7 @@ function createGUI( model, animations ) {
 
   }
 
-  emoteFolder.open();
+  //emoteFolder.open();
 
   // expressions
 
@@ -289,15 +208,13 @@ function createGUI( model, animations ) {
 
   }
 
-  activeAction = actions[ 'Walking' ];
+  activeAction = actions[ 'Running' ];
   activeAction.play();
 
-  expressionFolder.open();
-
+  //expressionFolder.open();
 }
 
 function fadeToAction( name, duration ) {
-
   previousAction = activeAction;
   activeAction = actions[ name ];
 
@@ -313,6 +230,53 @@ function fadeToAction( name, duration ) {
     .setEffectiveWeight( 1 )
     .fadeIn( duration )
     .play();
-
 }
 
+document.addEventListener("keydown", onKeyDown, false);
+
+function onKeyDown(event) {
+  let key = event.key;
+  if (key == 'ArrowLeft' && model.position.x != -(floorWidth - margin) / 2) {
+    model.position.x -= (floorWidth - margin) / 2;
+  } else if (key == 'ArrowRight' && model.position.x != (floorWidth - margin) / 2) {
+    model.position.x += (floorWidth - margin) / 2;
+  }
+};
+
+window.addEventListener("resize", onWindowResize);
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function animate() {
+  let brain = game.brains[game.info.access].get(game.me.username)
+  if(brain){
+    let [leftBlink, rightBlink] = brain.blink()
+    if (leftBlink && model.position.x != -(floorWidth - margin) / 2) {
+      model.position.x -= (floorWidth - margin) / 2;
+    } else if (rightBlink && model.position.x != (floorWidth - margin) / 2) {
+      model.position.x += (floorWidth - margin) / 2;
+    }
+  }
+
+  // brain.getMetric('alpha').then((alpha) =>{
+  //   modelMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
+  // })
+
+  checkCoins();
+
+  let dt = clock.getDelta();
+  if ( mixer ) mixer.update( dt );
+
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+
+  stats.update();
+}
+
+init();
+generateCoins();
+animate();
