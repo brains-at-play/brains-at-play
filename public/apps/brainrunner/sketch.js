@@ -2,10 +2,7 @@
   let connectToggle;
   let disconnectToggle;
   let museToggle;
-
   let marg = 100;
-  let colors = []
-  let concentration = 0.5;
   let key;
 
   setup = () => {
