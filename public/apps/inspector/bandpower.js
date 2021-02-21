@@ -79,9 +79,12 @@ draw = () => {
       
       fill(255)
       text(bandName,100,50 + 50*bandInd)
-
-      noFill()
       brain.getMetric(bandName).then((bandDict) => {
+
+        fill(colors[bandInd])
+        noStroke()
+        text(bandDict.average,100+100,50 + 50*bandInd)
+        noFill()
         bandDict.channels.forEach((val, channel) => {
           bandpowers[bandName][channel].shift()
           bandpowers[bandName][channel].push(val)
