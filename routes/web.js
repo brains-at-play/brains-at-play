@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const fs = require('fs');
+const login = require("./login");
 
 let appsDir = {}
 fs.readdir(path.join('public','apps'), (err, files) => {
@@ -20,9 +21,13 @@ let routes = app => {
 //     res.render(path.join(__dirname,'public','apps',req.params.name,'index'));
 // });
 
+
 router.get("/", function(req, res, next) {
   return res.render("index", { apps: appsDir});
 });
+
+router.post("/login", login.login);
+
   return app.use("/", router);
 };
 

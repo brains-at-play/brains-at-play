@@ -17,7 +17,7 @@ const WebSocket = require('ws');
 // Settings
 let protocol = 'http';
 const url = 'localhost'
-var port = normalizePort(process.env.PORT || '8080');
+var port = normalizePort(process.env.PORT || '80');
 
 //
 // App
@@ -36,24 +36,6 @@ app.set('interfaces', interfaces);
 
 //CORS
 app.use(require("cors")()) // allow Cross-domain requests
-
-// MongoDB
-const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://default-user:JgMmIChJd7IoyOJY@cluster0.bdgxr.mongodb.net/test?retryWrites=true&w=majority";
-app.set('mongo_url', uri);
-let submission_db;
-let chat_db;
-let collection;
-let collectionChunks;
-MongoClient.connect(uri, { useUnifiedTopology: true })
-  .then(client => {
-    app.set('mongo_client', client);
-    console.log('Connected to Database')
-    submission_db = client.db("brains-and-games").collection("submissions");
-    chat_db = client.db("livewire").collection("chat");
-    collection = client.db("brains-and-games").collection('photos.files');    
-    collectionChunks = client.db("brains-and-games").collection('photos.chunks');
-  })
 
 // Set Usage of Libraries
 app.use(logger('dev'));
@@ -136,7 +118,6 @@ function getCookie(req,name) {
 
 //Authentication
 server.on('upgrade', function (request, socket, head) {
-  console.log('Parsing session from request...');
     let userId;
     let type;
     let access;
@@ -163,7 +144,9 @@ server.on('upgrade', function (request, socket, head) {
     let command;
 
     if (!app.get('games').has(game)){
-      app.get('games').set(game, {interfaces: new Map(), brains: new Map(), privateBrains: new Map(), game:new Game(game)});
+      app.get('games').set(game, {interfaces: new Map(), brains: new Map(), privateBrains: new Map(), 
+        // game:new Game(game)
+      });
       
       // // Initialize Server-Side Game Object to Receive Live Data
       // let serverSideGame = app.get('games').get(game).game
@@ -301,10 +284,7 @@ wss.on('connection', function (ws, command, request) {
     // Manage specific messages from clients
     ws.on('message', function (str) {
       let obj = JSON.parse(str);
-      
-
       if (obj.destination == 'initializeBrains'){
-        
         // If added user is public or an interface, broadcast their presence
         let brains = app.get('games').get(game).brains
         let channelNamesArray = []
