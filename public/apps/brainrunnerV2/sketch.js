@@ -5,14 +5,22 @@
   let marg = 100;
   let key;
   let sound;
+  let song;
 
   preload = () => {
     // "Bell, Candle Damper, A (H4n).wav" by InspectorJ (www.jshaw.co.uk) of Freesound.org
     sound = loadSound('bell.wav');
+
+    // AudioBlocks | audioblocks-lift_me_up_songtradr2038440_BwsxmQRPw.wav
+    song = loadSound('song.wav');
   }
 
 
   setup = () => {
+
+      // Sound
+      song.setVolume()
+      song.play(0.5)
 
       // P5 Setup
       var c = createCanvas(windowWidth, windowHeight);
@@ -25,8 +33,8 @@
       disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
       museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
       disconnectToggle.hide()
-    
-    
+
+
       // Brains@Play Setup
       startAllGames()
 
