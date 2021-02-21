@@ -49,7 +49,7 @@
     labelTrials.size(labelWidth);
     inputIti = createInput(str(settings.iti));                                             
     inputIti.size(inputWidth);
-    labelIti = createElement(labelSize, 'Iti');
+    labelIti = createElement(labelSize, 'Iti (msec)');
     labelIti.size(labelWidth);
     inputNumSamples = createInput(str(settings.numSamples));                                       
     inputNumSamples.size(inputWidth);
@@ -57,7 +57,7 @@
     labelNumSamples.size(labelWidth);
     inputEventDuration = createInput(str(settings.eventDuration));                                   
     inputEventDuration.size(inputWidth);
-    labelEventDuration = createElement(labelSize, 'Event Duration');          
+    labelEventDuration = createElement(labelSize, 'Event Duration (msec)');          
     labelEventDuration.size(labelWidth);
     positionInputs();
 
