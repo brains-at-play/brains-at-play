@@ -14,6 +14,11 @@ let model, face;
 
 let coins = [];
 
+// 0: 0 < x < 0.1
+// 1: 0.1 <= x < 0.1
+//etc...
+let alphaValue;
+
 let scene = new THREE.Scene();
 scene.background = new THREE.Color( 0xe0e0e0 );
 //scene.fog = new THREE.Fog( 0xe0e0e0, 20, 100 );
@@ -33,12 +38,19 @@ let floor = new THREE.Mesh(floorGeometry, floorMaterial);
 floor.rotation.x = 1.57;
 scene.add(floor);
 
-function Coin () {
+function Coin(isGood) {
   let laneSelection = Math.floor(Math.random() * 3);
   let laneDisplacement = (floorWidth - margin) / 2;
 
   let objectGeometry = new THREE.ConeGeometry(coinUnit);
-  let objectMaterial = new THREE.MeshBasicMaterial( { color: 0xffd700 } );
+  let objectMaterial;
+
+  if (isGood) {
+    objectMaterial = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+  } else {
+    objectMaterial = new THREE.MeshBasicMaterial( { color: 0xff0000 } );
+  }
+
   let object = new THREE.Mesh(objectGeometry, objectMaterial);
   object.rotation.x = 180;
   object.position.set(laneDisplacement - (laneDisplacement * laneSelection), coinUnit + 1, -(floorLength - margin) / 2 );
@@ -168,9 +180,7 @@ function createGUI( model, animations ) {
   function createEmoteCallback( name ) {
 
     api[ name ] = function () {
-
       fadeToAction( name, 0.2 );
-
       mixer.addEventListener( 'finished', restoreState );
 
     };
@@ -180,17 +190,12 @@ function createGUI( model, animations ) {
   }
 
   function restoreState() {
-
     mixer.removeEventListener( 'finished', restoreState );
-
     fadeToAction( api.state, 0.2 );
-
   }
 
   for ( let i = 0; i < emotes.length; i ++ ) {
-
     createEmoteCallback( emotes[ i ] );
-
   }
 
   //emoteFolder.open();
@@ -251,6 +256,10 @@ function onWindowResize() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
+setAlpha(alpha) {
+
+}
+
 function animate() {
   let brain = game.brains[game.info.access].get(game.me.username)
   if(brain){
@@ -262,9 +271,10 @@ function animate() {
     }
   }
 
-  // brain.getMetric('alpha').then((alpha) =>{
-  //   modelMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
-  // })
+   brain.getMetric('alpha').then((alpha) =>{
+     setAlpha();
+     //modelMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
+   })
 
   checkCoins();
 
