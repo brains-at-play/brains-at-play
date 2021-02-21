@@ -81,6 +81,14 @@ function onKeyDown(event) {
   }
 };
 
+window.addEventListener("resize", onWindowResize);
+
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
 function animate() {
   let brain = game.brains[game.info.access].get(game.me.username)
   if(brain){
@@ -96,13 +104,9 @@ function animate() {
   //   playerMaterial.color.setRGB(0, 225, 255 + alpha.average/100)
   // })
 
-
   checkCoins();
   requestAnimationFrame(animate);
   renderer.render(scene, camera);
-
-
-  
 }
 
 generateCoins();
