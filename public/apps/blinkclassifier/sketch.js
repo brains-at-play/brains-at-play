@@ -4,22 +4,19 @@
   
   let length = 5;
   let numItems = Math.pow(length, 2);
-  let objects = [];
-  for (let i=0;i < numItems; i++){
-    objects.push(i.toString())
-  }
+  let objects = ['blink right', 'blink left', 'blink both', "don't blink"];
   let margin = 100;
   let rightSidebar = 300;
   let chooseEllipses = [];
   let scaleEEG = 30;
   
   let settings = {
-    name: 'p300',
-    subset: 0.2,
+    name: 'blink',
+    subset: 1/objects.length,
     trials: 10,
-    iti: 1000, // milliseconds
+    iti: 2000, // milliseconds
     numSamples: 100, //500,
-    eventDuration: 250, // milliseconds
+    eventDuration: 1000, // milliseconds
     objects: objects
   }
   
@@ -39,10 +36,10 @@
     game.simulate(2);
   
     // Button Setup 
-      museToggle.mousePressed(async () => {
-          await museClient.connect()
-          game.connectBluetoothDevice(museClient)
-      });
+    museToggle.mousePressed(async () => {
+      await game.bluetooth.devices['muse'].connect()
+      game.connectBluetoothDevice(brainsatplay.museClient)
+    });
   
       connectToggle.mousePressed(() => {
           game.initializeSession(settings)
@@ -58,42 +55,26 @@
   }
   
   draw = () => {  
-      background(0);
-      noStroke()
+    background(0);
+    noStroke()
   
-    if (game.bluetooth.device){
-        museToggle.hide()
-    } else {
-        museToggle.show()
-    }
+    if (game.bluetooth.connected){
+      museToggle.hide()
+  } else {
+      museToggle.show()
+  }
   
     // Update Voltage Buffers and Derived Variables
     game.update();
   
-    chooseEllipses = game.session.currentEventState.chosen
-    chooseEllipses = chooseEllipses.map((key) => {
-      return objects.indexOf(key)
-    })
-  
-    let num = 0;
-    for (let i = 0; i < length; i++) {
-      for (let j = 0; j < length; j++) {
-        if (chooseEllipses.includes(num)) {
-          fill(0)
-        } else {
-          fill(255)
-        }
-  
-        ellipse(margin + (i * ((windowWidth - 2 * margin - rightSidebar) / (length - 1))), // x
-          margin + (j * ((windowHeight - 2 * margin) / (length - 1))), // y
-          Math.min(windowWidth, windowHeight) * (1 / (3 * length))) // size
-        
-        num++
-      }
-    }
-  
     fill('white')
     textStyle(BOLD)
+    textSize(15)
+    console.log(game.session.currentEventState.chosen)
+    if (game.session.currentEventState.chosen[0]){
+      text(game.session.currentEventState.chosen[0],windowWidth/2, windowHeight/2)
+    }
+
     textSize(15)
     text('Trial: ' + game.session.trial, (windowWidth - rightSidebar) + margin, margin)
   

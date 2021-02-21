@@ -39,10 +39,10 @@
     game.simulate(2);
   
     // Button Setup 
-      museToggle.mousePressed(async () => {
-          await museClient.connect()
-          game.connectBluetoothDevice(museClient)
-      });
+    museToggle.mousePressed(async () => {
+      await game.bluetooth.devices['muse'].connect()
+      game.connectBluetoothDevice(brainsatplay.museClient)
+    });
   
       connectToggle.mousePressed(() => {
           game.initializeSession(settings)
