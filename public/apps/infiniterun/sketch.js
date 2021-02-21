@@ -88,7 +88,7 @@
         if (user.data.active){
           fill('white')
           textAlign(LEFT);
-          text('Game On: ' + user.data.active,margin + 20+(width*userInd),height*(1/3))
+          text('Username: ' + username,margin + 20+(width*userInd),height*(1/3))
           text('Concentration: ' + user.data.concentration.toFixed(3),margin + 20+(width*userInd),height*(2/3))
         }
         userInd++
