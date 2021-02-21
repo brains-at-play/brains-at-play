@@ -17,7 +17,7 @@ const WebSocket = require('ws');
 // Settings
 let protocol = 'http';
 const url = 'localhost'
-var port = normalizePort(process.env.PORT || '80');
+var port = normalizePort(process.env.PORT || '8080');
 
 //
 // App
