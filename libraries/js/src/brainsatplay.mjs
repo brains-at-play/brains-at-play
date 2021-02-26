@@ -1175,7 +1175,7 @@ class Brain {
                     let channelInd = this.usedChannels[this.channelNames.indexOf(...channels)].index
                     let buffer = this.buffers.voltage[channelInd]
                     let lastTwenty = buffer.slice(buffer.length-this.blink.duration)
-                    let max = Math.max(...lastTwenty)//.map(v => Math.abs(v)))
+                    let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
                     blinks[ind] = (max > this.blink.threshold) * (quality[channelInd] > 0)
                 }
             })

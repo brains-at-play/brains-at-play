@@ -126,6 +126,12 @@ draw = () => {
        centersX[ind] + signalWidth/2, 
        centersY[ind] + 1*voltageScaling*brain.blink.threshold
       )
+
+      line(centersX[ind] - signalWidth/2, 
+        centersY[ind] - 1*voltageScaling*brain.blink.threshold,
+        centersX[ind] + signalWidth/2, 
+        centersY[ind] - 1*voltageScaling*brain.blink.threshold
+       )
   }
   })
 }
