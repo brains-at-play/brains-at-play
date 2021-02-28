@@ -257,8 +257,29 @@ export class Game {
         this.updateSession()
     }
 
+    getVoltage(username,normalize) {
+        if (this.brains[this.info.access].has(username)){
+            return this.brains[this.info.access].get(username).getVoltage(username,normalize)              
+        } else {
+            return this.brains[this.info.access].get(this.me.username).getVoltage(username,normalize)              
+        }
+    }
+
+    createBuffer(allChannels = true, bufferSize) {
+        if (allChannels){
+            return Array.from(Object.keys(this.eegCoordinates), e => {if (this.usedChannelNames.includes(e)){
+                return Array(bufferSize).fill(0)
+            } else {
+                return [NaN]
+            }})
+        } else {
+            return Array.from({length:this.usedChannelNames.length}, e => {return Array(bufferSize).fill(0)})
+        }
+    }
+
     async getMetric(metricName,username) {
         // if ((this.connection === undefined) || (location === 'local')){
+            if (metricName !== undefined){
         if (metricName === 'synchrony') {
             let dict = {}
             dict.channels = this.synchrony('pcc')
@@ -280,6 +301,9 @@ export class Game {
                 return this.brains[this.info.access].get(this.me.username).getMetric(metricName)              
             }
         } 
+    } else {
+        return {channels: Array.from({length: Object.keys(game.eegCoordinates).length}, e => NaN), average: NaN}
+    }
     // } else {
     //     if (this.connection === undefined){
     //         val = 0
@@ -287,16 +311,6 @@ export class Game {
     //         val = await this.request({game:this.gameName},'POST',metricName)
     //     }
     // }
-    }
-
-    // NOTE: Fix
-    flatten(metricName = 'voltage', normalize = false) {
-        let _temp = this.metrics[metricName].buffer;
-        if (normalize) {
-            _temp = this.normalizeUserBuffers(this.metrics[metricName].buffer);
-        }
-        // Upsample Buffer
-        return new Float32Array([..._temp.flat(2)])
     }
 
     updateUsedChannels() {
@@ -907,7 +921,7 @@ class Brain {
 
         if (channelNames === undefined){
             channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
-            // 'Fz,C3,Cz,C4,Pz,PO7,Oz,PO8,F5,F7,F3,F1,F2,F4,F6,F8' // OpenBCI
+            // channelNames = 'Fz,C3,Cz,C4,Pz,PO7,Oz,PO8,F5,F7,F3,F1,F2,F4,F6,F8' // OpenBCI
         }
 
         channelNames = channelNames.toLowerCase().split(',')
