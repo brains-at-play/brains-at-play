@@ -1,10 +1,12 @@
 <div style="display: flex; align-items: center;  justify-content:center;margin-bottom: 25px;">
 <div style="text-align:center; width: 400px;">
 <img src="./logo.png">
-A full-stack framework for developing web-based brain-computer interface (BCI) applications
+<p>A full-stack framework for developing web-based brain-computer interface (BCI) applications</p>
 
-[![Github badge](https://img.shields.io/badge/github-source_code-blue.svg?logo=github&logoColor=white)](https://github.com/brainsatplay/brainsatplay)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<img src="https://img.shields.io/badge/github-source_code-blue.svg?logo=github&logoColor=white"
+href="https://github.com/brainsatplay/brainsatplay">
+<img src="https://img.shields.io/badge/License-MIT-yellow.svg"
+href="https://opensource.org/licenses/MIT">
 </div>
 </div>
 
