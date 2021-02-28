@@ -1,6 +1,6 @@
 <div style="display: flex; align-items: center;  justify-content:center;margin-bottom: 25px;">
 <div style="text-align:center; width: 400px;">
-<img src="./logo.png">
+<img src="./logo.png" style="width: 400px;">
 <p>A full-stack framework for developing web-based brain-computer interface (BCI) applications</p>
 
 <img src="https://img.shields.io/badge/github-source_code-blue.svg?logo=github&logoColor=white"
