@@ -6,7 +6,6 @@ import Fili from 'fili';
 
 export {Game}
  
-
 /**
  * @class module:brainsatplay.Game
  * @description Manage game data.
@@ -1136,7 +1135,7 @@ class Brain {
      * @method module:brainsatplay.Game.loadData
      * @description Load data passed to the Brain to the correct buffer / container.
      */
-    
+
     loadData(data) {
 
         let signal = data.signal

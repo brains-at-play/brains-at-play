@@ -1,18 +1,24 @@
-# brainsatplay
-
-A full-stack framework for developing web-based BCI applications.
+<div style="display: flex; align-items: center;  justify-content:center;margin-bottom: 25px;">
+<div style="text-align:center; width: 400px;">
+<img src="./logo.png">
+A full-stack framework for developing web-based brain-computer interface (BCI) applications
 
 [![Github badge](https://img.shields.io/badge/github-source_code-blue.svg?logo=github&logoColor=white)](https://github.com/brainsatplay/brainsatplay)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
+</div>
 
-[Getting Started](#getting-started) | [Examples](#examples) | [Support](#Support) | [Acknowledgements](#Acknowledgments)
 
+## Getting Started with brainsatplay.js
+### Library Usage
+#### Node.js
+```bash
+npm install brainsatplay
+``` 
 
-## Getting Started <a name="getting-started" />
-## Using the Brains@Play Library 
-1. Include the following script tag in your projects:
+#### Browser
 ```html
-<script src="https://cdn.jsdelivr.net/npm/brainsatplay@0.0.1"></script>
+<script src="https://cdn.jsdelivr.net/npm/brainsatplay"></script>
 ``` 
 ### Running a Local Server
 1. Install [NPM](https://www.npmjs.com/) and [Node](https://nodejs.org/en/).
@@ -82,7 +88,6 @@ python stream.py
 The Brains@Play Project Template uses p5.js to illustrate the basic functionality of the Brains@Play API. We include it in this repository for you to kickstart your game development! 
 
 ### [Brainstorm](https://brainsatplay.com/brainstorm) 
-
 Brainstorm is a web-based BCI game that computes, visualizes, and promotes the synchronization of brains across geographic, political, and social barriers. To generate public discussion about the ethical, legal, and social implications of emerging commercial devices to monitor brain activity, Brainstorm was be showcased at [Livewire: A Stimulating Night of Neurotechnology](https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&s_type=&s_genre=)—a USC Visions and Voices event combining neuroscience, neuroethics, and interactive media for participatory technology design.
 
 ## Support
@@ -91,15 +96,14 @@ If you are having issues, please email Garrett Flynn at gflynn@usc.edu
 
 ## Acknowledgments
 ### Funding
-**brainsatplay** was supported by [OpenBCI](https://openbci.com/) and [USC Visions and Voices](https://visionsandvoices.usc.edu/) for the production of [Livewire: A Stimulating Night of Neurotechnology](https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&s_type=&s_genre=) 
+**brainsatplay.js** was supported by [OpenBCI](https://openbci.com/) and [USC Visions and Voices](https://visionsandvoices.usc.edu/) for the production of [Livewire: A Stimulating Night of Neurotechnology](https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&s_type=&s_genre=).
 
 ### External Libraries Used
 #### JavaScript
 - [NPM](https://www.npmjs.com/) and [Node](https://nodejs.org/en/).
 - [bci.js](https://bci.js.org/)
-- [muse-js](https://github.com/urish/muse-js/tree/
+- [muse-js](https://github.com/urish/muse-js/tree/master/src)
 - [Express](https://expressjs.com/)
-master/src)
 - [Webpack](https://webpack.js.org/)
 - [ws](https://www.npmjs.com/package/ws)
 

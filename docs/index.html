@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+    <title>Brains@Play Docs | Home</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -11,6 +11,7 @@
     <![endif]-->
     <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
     <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+    <link rel=icon href='favicon.ico'>
 </head>
 
 <body>
@@ -42,6 +43,120 @@
 
 
 
+    <section>
+        <article><div style="display: flex; align-items: center;  justify-content:center;margin-bottom: 25px;">
+<div style="text-align:center; width: 400px;">
+<img src="./logo.png">
+A full-stack framework for developing web-based brain-computer interface (BCI) applications
+<p><a href="https://github.com/brainsatplay/brainsatplay"><img src="https://img.shields.io/badge/github-source_code-blue.svg?logo=github&amp;logoColor=white" alt="Github badge"></a>
+<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a></p>
+</div>
+</div>
+<h2>Getting Started with brainsatplay.js</h2>
+<h3>Library Usage</h3>
+<h4>Node.js</h4>
+<pre class="prettyprint source lang-bash"><code>npm install brainsatplay
+</code></pre>
+<h4>Browser</h4>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;https://cdn.jsdelivr.net/npm/brainsatplay&quot;>&lt;/script>
+</code></pre>
+<h3>Running a Local Server</h3>
+<ol>
+<li>Install <a href="https://www.npmjs.com/">NPM</a> and <a href="https://nodejs.org/en/">Node</a>.</li>
+<li>If you have npm installed already, make sure to update it to the latest version using:</li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>npm update -g npm
+</code></pre>
+<ol start="2">
+<li>In the project folder, install the required Node modules by typing this into your command line:</li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>npm install
+</code></pre>
+<ol start="3">
+<li>In your command line:</li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>npm start
+</code></pre>
+<ol start="4">
+<li>Click on the link in the terminal to navigate to http://localhost to view a template project using the Brains@Play library</li>
+</ol>
+<h3>Stream Data to the Server</h3>
+<ol>
+<li>Use your favorite environment management system (e.g. <a href="https://docs.conda.io/en/latest/miniconda.html">Miniconda</a>) to create a new environment.</li>
+<li>Install the brainsatplay package</li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>pip install brainsatplay
+</code></pre>
+<ol start="3">
+<li>Navigate to this project's /libraries/python directory</li>
+<li>In stream.py, configure the following settings for your specific use-case:</li>
+</ol>
+<pre class="prettyprint source lang-python"><code>  BOARD = 'SYNTHETIC_BOARD' 
+  # Synthetic Stream: 'SYNTHETIC_BOARD'
+  # OpenBCI Board: 'CYTON_DAISY_BOARD'
+  # Neurosity Boards: 'NOTION_1_BOARD' or 'NOTION_2_BOARD'
+
+  PORT = None
+  # Synthetic Stream: None
+  # Mac: '/dev/cu.usbserial-________'
+  # Windows: 'COM_'
+                  
+  URL = 'http://localhost/'#'https://brainsatplay.azurewebsites.net'
+  # Local: 'http://localhost'
+  # Deployed Game: 'https://brainsatplay.azurewebsites.net'
+
+  LOGIN_DATA = { 'guestaccess': True }#,'guestId': '9e90cd6f-35a9-45b2-9d7b-229968275025' }
+  # Guests: { 'guestaccess': True, 'guestId': '********'}
+  # Authenticated Users: { 'username': '********', 'password': '********' }
+  
+  GAME = 'template'
+  # Current Games: template, brainstorm
+
+  ACCESS = 'public'
+  # Anyone Can Access Data (required to play games): 'public'
+  # Only Interfaces with Same USERID Access Data: 'private'
+
+  DATA_STREAM = ['brainflow', 'arbitrary']
+  # Stream raw voltages using Brainflow: 'brainflow'
+    # Extend this array with arbitrary fields to pass to the front end
+
+  def arbitraryEventFunction(brain): 
+    # Use this callback function to pass arbitrary data to the front end (corresponding to fields in DATA_STREAM)
+      brain.passData('arbitrary', math.sin(time.time()))
+</code></pre>
+<ol start="6">
+<li>Begin streaming:</li>
+</ol>
+<pre class="prettyprint source lang-bash"><code>python stream.py
+</code></pre>
+<h2>Examples</h2>
+<h3><a href="https://brainsatplay.com/template">Brains@Play Project Template</a></h3>
+<p>The Brains@Play Project Template uses p5.js to illustrate the basic functionality of the Brains@Play API. We include it in this repository for you to kickstart your game development!</p>
+<h3><a href="https://brainsatplay.com/brainstorm">Brainstorm</a></h3>
+<p>Brainstorm is a web-based BCI game that computes, visualizes, and promotes the synchronization of brains across geographic, political, and social barriers. To generate public discussion about the ethical, legal, and social implications of emerging commercial devices to monitor brain activity, Brainstorm was be showcased at <a href="https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&amp;s_type=&amp;s_genre=">Livewire: A Stimulating Night of Neurotechnology</a>—a USC Visions and Voices event combining neuroscience, neuroethics, and interactive media for participatory technology design.</p>
+<h2>Support</h2>
+<p>If you are having issues, please email Garrett Flynn at gflynn@usc.edu</p>
+<h2>Acknowledgments</h2>
+<h3>Funding</h3>
+<p><strong>brainsatplay.js</strong> was supported by <a href="https://openbci.com/">OpenBCI</a> and <a href="https://visionsandvoices.usc.edu/">USC Visions and Voices</a> for the production of <a href="https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&amp;s_type=&amp;s_genre=">Livewire: A Stimulating Night of Neurotechnology</a>.</p>
+<h3>External Libraries Used</h3>
+<h4>JavaScript</h4>
+<ul>
+<li><a href="https://www.npmjs.com/">NPM</a> and <a href="https://nodejs.org/en/">Node</a>.</li>
+<li><a href="https://bci.js.org/">bci.js</a></li>
+<li><a href="https://github.com/urish/muse-js/tree/master/src">muse-js</a></li>
+<li><a href="https://expressjs.com/">Express</a></li>
+<li><a href="https://webpack.js.org/">Webpack</a></li>
+<li><a href="https://www.npmjs.com/package/ws">ws</a></li>
+</ul>
+<h4>Python</h4>
+<ul>
+<li><a href="https://brainflow.readthedocs.io/en/stable/index.html">Brainflow</a></li>
+<li><a href="https://websockets.readthedocs.io/en/stable/intro.html">websockets</a></li>
+<li><a href="https://requests.readthedocs.io/en/master/">requests</a></li>
+</ul></article>
+    </section>
+
 
 
 
@@ -56,7 +171,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Feb 28 2021 15:38:17 GMT-0600 (Central Standard Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.6</a> on Sun Feb 28 2021 16:46:19 GMT-0600 (Central Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
