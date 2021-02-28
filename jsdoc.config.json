@@ -13,7 +13,7 @@
         "default": {
             "layoutFile": "./templates/brainstorm/tmpl/layout.tmpl",
             "staticFiles": {
-                "paths": ["./logo.png","./favicon.ico"]
+                "paths": ["./logo.png","./favicon.ico","./templates/brainstorm/static"]
             }
         }
     }
