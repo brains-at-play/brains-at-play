@@ -10,6 +10,8 @@ href="https://opensource.org/licenses/MIT">
 </div>
 </div>
 
+## Description
+**brainsatplay.js** is full-stack framework for developing web-based brain-computer interface (BCI) applications. This library extends [bci.js](https://bci.js.org/) to remove the networking and data management requirements for developing functional BCI apps hosted on the web.
 
 ## Getting Started with brainsatplay.js
 ### Library Usage

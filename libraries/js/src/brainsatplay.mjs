@@ -112,6 +112,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.setUpdateMessage
      * @description Log update messages from an active Websocket connection.
      */
@@ -129,6 +130,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.getMyIndex
      * @description Update the current index of your username in the Game class.
      */
@@ -184,6 +186,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.add
      * @description Add a brain to your game.
      */
@@ -209,6 +212,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.remove
      * @description Remove brains from your game.
      */
@@ -220,6 +224,7 @@ class Game {
         this.updateUsedChannels()
     }
     /**
+     * @ignore
      * @method module:brainsatplay.Game.generateSignal
      * @description Generate a complex sine wave.
      */
@@ -247,6 +252,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.generateVoltageStream
      * @description Generate a synthetic voltage signal for each synthetic brain in the game.
      */
@@ -386,6 +392,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.updateUsedChannels
      * @description Updates the used channels in the game.
      */
@@ -595,6 +602,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.updateBrainRoutine
      * @description A shortcut to call updateUsedChannels(), getMyIndex(), and setUpdateMessate() when Brains are added or removed from the game.
      */
@@ -607,6 +615,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.establishWebsocket
      * @description Establish a Websocket connection. Sets the connection parameters.
      */
@@ -639,6 +648,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.setWebsocketMethods
      * @description Sets onerror, onopen, onmessage, and onclose methods for the Websocket connection.
      */
@@ -744,6 +754,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.send
      * @description Send a message over Websockets to the server.
      */
@@ -770,6 +781,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.checkURL
      * @description Check if a request href is properly formatted
      * @param url {string} URL href
@@ -782,6 +794,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.checkPathname
      * @description Check if a request pathname is properly formatted
      * @param pathname {string} URL pathname
@@ -796,6 +809,7 @@ class Game {
 
 
     /**
+     * @ignore
      * @async
      * @method module:brainsatplay.Game.request
      * @description Send an HTTP request
@@ -837,6 +851,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @async
      * @method module:brainsatplay.Game.login
      * @description Login to a brainsatplay server. Called by [brainsatplay.Game.connect()]{@link module:brainsatplay.Game.connect}.
@@ -878,7 +893,7 @@ class Game {
     /**
      * @async
      * @method module:brainsatplay.Game.signup
-     * @description Sign up for a brainsatplay account.
+     * @description Sign up for a brainsatplay account. Account details are used for [brainsatplay.Game.connect()]{@link module:brainsatplay.Game.connect}.
      * @param dict {dict} Login parameters.
      * @param dict {string} Server URL.
      */
@@ -938,6 +953,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.setSessionSettings
      * @description Set session settings.
      * @param settings {dict} Setting dictionary.
@@ -968,6 +984,7 @@ class Game {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.updateSession
      * @description Update session based on settings.
      */
@@ -1114,6 +1131,7 @@ class Brain {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Game.initializeStorage
      * @description Initialize a data storage container for the session.
      */
@@ -1132,6 +1150,7 @@ class Brain {
     }
  
     /**
+     * @ignore
      * @method module:brainsatplay.Game.loadData
      * @description Load data passed to the Brain to the correct buffer / container.
      */
@@ -1242,6 +1261,7 @@ class Brain {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Brain.normalize
      * @description Normalizes the passed array between 0 and 1
      */
@@ -1264,6 +1284,7 @@ class Brain {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Brain.stDev
      * @description Returns the standard deviation of an array of values. 
      */
@@ -1352,6 +1373,7 @@ class Brain {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Brain.bandpass
      * @description Filters the passed EEG channel data between the specified low and high frequency values.
      */
@@ -1368,6 +1390,7 @@ class Brain {
     }
 
     /**
+     * @ignore
      * @method module:brainsatplay.Brain.removeDCOffset
      * @description Removes the average from each voltage buffer
      */
@@ -1440,7 +1463,7 @@ class Brain {
 
 /**
  * @constant
- * @description A dictionary of EEG coordinates included in the brainsatplay.js library. From https://doi.org/10.1016/j.neuroimage.2009.02.006
+ * @description A dictionary of EEG coordinates included in the brainsatplay.js library. From [Automated cortical projection of EEG sensors: Anatomical correlation via the international 10–10 system]{@link https://doi.org/10.1016/j.neuroimage.2009.02.006} by Koessler et al. (2009)
  * @type {dict}
  */
 const eegCoordinates = {
