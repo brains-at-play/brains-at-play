@@ -271,7 +271,7 @@ class Game {
                     }
 
                     let samples = this.generateSignal(amps, freqs, user.samplerate, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
-                    user.loadData({signal:[samples],time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
+                    user.loadData({signal:[samples], time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
                 })
             }
             userInd++
@@ -569,7 +569,6 @@ class Game {
             this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
             this.bluetooth.devices[type].eegReadings.subscribe(r => {
                 let me = this.brains[this.info.access].get(this.me.username)
-                console.log(me)
                 if (me !== undefined) {
                     if (this.connection.status) {
                         let data = new Array(me.numChannels)
@@ -654,7 +653,6 @@ class Game {
     commonBluetoothSetup(type){
         this.bluetooth.deviceType = type
         let prevData = this.brains[this.info.access].get(this.me.username).data
-        console.log(this.me.username)
         this.remove(this.me.username)
         this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,false)
         this.brains[this.info.access].get(this.me.username).data = prevData
