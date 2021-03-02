@@ -2,7 +2,6 @@
 
   let connectToggle;
   let disconnectToggle;
-  let museToggle;
 
   let margin = 100;
   let colors = [];
@@ -52,11 +51,9 @@
       textAlign(CENTER, CENTER);
       resizeCanvas(windowWidth, windowHeight);
       connectToggle = createButton('Connect to Server');
-      museToggle = createButton('Connect Muse');
       disconnectToggle = createButton('Disconnect');
       connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
       disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
       disconnectToggle.hide()
     
     
@@ -64,11 +61,6 @@
       game = new brainsatplay.Game('template')
       game.newGame('template')
       game.simulate(2);
-      
-      museToggle.mousePressed(async () => {
-          await game.bluetooth.devices['muse'].connect()
-          game.connectBluetoothDevice(brainsatplay.museClient)
-      });
 
       connectToggle.mousePressed(() => {
           game.connect({'guestaccess': true})
@@ -84,12 +76,6 @@
     }
     
     draw = () => {
-
-      if (game.bluetooth.connected){
-          museToggle.hide()
-      } else {
-          museToggle.show()
-      }
 
       background(0);
     
@@ -183,7 +169,6 @@
       resizeCanvas(windowWidth, windowHeight);
       connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
       disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
     }
 
     convertStrToNum = (array) => {

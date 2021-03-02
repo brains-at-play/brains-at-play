@@ -1,6 +1,5 @@
   let connectToggle;
   let disconnectToggle;
-  let museToggle;
   
   let length = 5;
   let numItems = Math.pow(length, 2);
@@ -27,11 +26,9 @@
     // P5 Setup
     createCanvas(windowWidth, windowHeight);
     connectToggle = createButton('Start Session');
-    museToggle = createButton('Connect Muse');
     disconnectToggle = createButton('End Session');
     connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
     disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-    museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
     disconnectToggle.hide()
   
     // Brains@Play Setup
@@ -39,11 +36,6 @@
     game.simulate(2);
   
     // Button Setup 
-    museToggle.mousePressed(async () => {
-      await game.bluetooth.devices['muse'].connect()
-      game.connectBluetoothDevice(brainsatplay.museClient)
-    });
-  
       connectToggle.mousePressed(() => {
           game.initializeSession(settings)
           disconnectToggle.show()
@@ -58,15 +50,9 @@
   }
   
   draw = () => {  
-      background(0);
-      noStroke()
-  
-    if (game.bluetooth.device){
-        museToggle.hide()
-    } else {
-        museToggle.show()
-    }
-  
+    background(0);
+    noStroke()
+
     // Update Voltage Buffers and Derived Variables
     game.update();
   
@@ -125,5 +111,4 @@
       resizeCanvas(windowWidth, windowHeight);
       connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
       disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
   }

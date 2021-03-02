@@ -1,6 +1,5 @@
 let connectToggle;
 let disconnectToggle;
-let museToggle;
 
 let margin = 25;
 let signalWidth = 25
@@ -22,30 +21,16 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  museToggle = createButton('Connect Muse');
-  museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-
   // Brains@Play Setup
   game = new brainsatplay.Game('blink')
   game.simulate(1)
   ballSize = Math.min(windowHeight/4, windowWidth/4)
   baseY = windowHeight/2;
   ballPos = [windowWidth/2, baseY]
-
-  museToggle.mousePressed(async () => {
-    await game.bluetooth.devices['muse'].connect()
-    game.connectBluetoothDevice(brainsatplay.museClient)
-  });
 }
 
 
 draw = () => {
-  
-    if (game.bluetooth.connected) {
-      museToggle.hide()
-    } else {
-      museToggle.show()
-    }
 
     background(0);
     // Update Voltage Buffers
@@ -152,5 +137,4 @@ draw = () => {
 
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
     }

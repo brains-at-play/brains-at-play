@@ -1,8 +1,6 @@
 
   let connectToggle;
   let disconnectToggle;
-  let museToggle;
-  let freeEEGToggle;
   let margin = 100;
   let colors = []
 
@@ -17,28 +15,14 @@
       textAlign(CENTER, CENTER);
       resizeCanvas(windowWidth, windowHeight);
       connectToggle = createButton('Connect to Server');
-      museToggle = createButton('Connect Muse');
       disconnectToggle = createButton('Disconnect');
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-200-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-200-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-125-museToggle.height);
+      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-50-connectToggle.height);
+      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-50-disconnectToggle.height);
       disconnectToggle.hide()
-      freeEEGToggle = createButton('Connect FreeEEG');
-      freeEEGToggle.position(windowWidth - 25 - freeEEGToggle.width, windowHeight - 50 - freeEEGToggle.height);
-      
-      freeEEGToggle.mousePressed(async () => {
-        game.connectBluetoothDevice('freeEEG32')
-      });
-    
-    
+
       // Brains@Play Setup
       game = new brainsatplay.Game('template')
       game.simulate(2);
-      
-      museToggle.mousePressed(async () => {
-          await game.bluetooth.devices['muse'].connect()
-          game.connectBluetoothDevice('muse')
-      });
 
       connectToggle.mousePressed(() => {
           game.connect({'guestaccess': true})
@@ -54,12 +38,6 @@
     }
     
     draw = () => {
-
-      if (game.bluetooth.connected){
-          museToggle.hide()
-      } else {
-          museToggle.show()
-      }
 
       background(0);
     
@@ -145,9 +123,6 @@
     
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-175-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-175-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-125-museToggle.height);
-      freeEEGToggle.position(windowWidth - 25 - freeEEGToggle.width, windowHeight - 50 - freeEEGToggle.height);
-
+      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-50-connectToggle.height);
+      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-50-disconnectToggle.height);
   }

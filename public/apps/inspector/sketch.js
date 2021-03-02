@@ -1,6 +1,5 @@
 let connectToggle;
 let disconnectToggle;
-let museToggle;
 
 let margin = 100;
 let colors = []
@@ -15,29 +14,15 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  museToggle = createButton('Connect Muse');
-  museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-
 
   // Brains@Play Setup
   game = new brainsatplay.Game('inspector')
   game.simulate(1)
-
-  museToggle.mousePressed(async () => {
-    await game.bluetooth.devices['muse'].connect()
-    game.connectBluetoothDevice(brainsatplay.museClient)
-  });
 }
 
 draw = () => {
   
-    if (game.bluetooth.connected) {
-      museToggle.hide()
-    } else {
-      museToggle.show()
-    }
-
-    background(0);
+  background(0);
   noStroke()
   fill(50,50,50)
   let headWidth = Math.min(windowHeight/2, windowWidth/2)
@@ -103,5 +88,4 @@ stroke(
 
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
     }

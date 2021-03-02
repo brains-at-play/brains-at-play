@@ -2,19 +2,17 @@
 
 function openInfo() {
   if (document.getElementById("info-card")){
-  document.getElementById("info-card").style.transform = "translateX(-400px)";
+  document.getElementById("info-card").style.transform = "translateX(0%)";
   document.getElementById("navToggle").onclick =function() {closeInfo()};
-  document.getElementById("nav-arrow").style.transform = 'rotate(-45deg)'
-  document.getElementById("navToggle").style.transform = 'translate(25px)'
+  document.getElementById("nav-arrow").style.transform = 'rotate(135deg)'
   }
 }
 
   function closeInfo() {
     if (document.getElementById("info-card")){
-    document.getElementById("info-card").style.transform = "translateX(0px)";
+    document.getElementById("info-card").style.transform = "translateX(-100%)";
     document.getElementById("navToggle").onclick = function() {openInfo()};
-    document.getElementById("nav-arrow").style.transform = 'rotate(135deg)'
-    document.getElementById("navToggle").style.transform = 'translate(-100%)'
+    document.getElementById("nav-arrow").style.transform = 'rotate(-45deg)'
     }
   }
   
@@ -45,6 +43,7 @@ function openInfo() {
       position: fixed;
       top: 0;
       left: 0;
+      transform: translateX(0%);
       width: 400px;
       padding: 25px;
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6));
@@ -88,10 +87,9 @@ function openInfo() {
 
   .info-icon {
       position: fixed;
-      left: 400px;
+      right: 0px;
       top: 25px;
-      transform: translateX(-100%);
-      /*margin: 1em;*/
+      transform: translateX(150%);
       padding: 1em;
       width: 40px;
       z-index: 1000;
@@ -121,7 +119,7 @@ function openInfo() {
     </style>
 
       <div id="info-card">
-      <div id="navToggle" onclick="openInfo()" class="info-icon">
+      <div id="navToggle" onclick="closeInfo()" class="info-icon">
       <i id="nav-arrow" class="arrow left"></i>
       </div>
         <h4>${name}</h4>
