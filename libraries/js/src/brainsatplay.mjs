@@ -307,7 +307,6 @@ class Game {
                     this.send('bci',message)
                 } else {
                     if (this.brains[this.info.access].get(this.me.username)){
-                        console.log(data)
                     this.brains[this.info.access].get(this.me.username).loadData({signal:data,time:[]})
                     }
                 }
@@ -570,8 +569,9 @@ class Game {
             this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
             this.bluetooth.devices[type].eegReadings.subscribe(r => {
                 let me = this.brains[this.info.access].get(this.me.username)
+                console.log(me)
                 if (me !== undefined) {
-                    if ((this.connection.status)) {
+                    if (this.connection.status) {
                         let data = new Array(me.numChannels)
                         data[r.electrode] = r.samples;
                         let message = {
@@ -654,6 +654,7 @@ class Game {
     commonBluetoothSetup(type){
         this.bluetooth.deviceType = type
         let prevData = this.brains[this.info.access].get(this.me.username).data
+        console.log(this.me.username)
         this.remove(this.me.username)
         this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,false)
         this.brains[this.info.access].get(this.me.username).data = prevData
@@ -793,10 +794,17 @@ class Game {
         
                 connection.onclose = () => {
                     this.connection.status = false;
+                    let notRemoved = true;
                     Object.keys(this.brains).forEach(access => {
                         this.brains[access].forEach((brain,username) => {
                             if (username !== this.me.username){
                                 this.remove(username,access)
+                            } else if (notRemoved){
+                                this.brains[access].get(this.me.username).username = 'me'
+                                this.brains[access].set('me',this.brains[access].get(this.me.username))
+                                this.brains[access].delete(this.me.username)
+                                this.me.username = 'me'
+                                notRemoved = false;
                             }
                         })
                     })
