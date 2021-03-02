@@ -62,17 +62,20 @@
         stroke(c)
         textSize(100);
     
-        let brainData = game.brains[game.info.access].get(username).getVoltage()
+        let brainData = game.brains[game.info.access].get(username).getVoltage(true)
+
         viewedChannels.forEach((usedChannel,ind) => {
             let data = brainData[usedChannel.index]
             let dx = windowWidth / data.length;
 
+            scaling = viewedChannels.length
+
       // Voltage Lines
         for (var point = 0; point < data.length - 1; point++) {
           line(point * dx,
-            (-(data[point] * (windowHeight-2*margin)/ (1000*(viewedChannels.length-1))) + (ind/(viewedChannels.length-1))*(windowHeight-2*margin) + margin),
+            (-(data[point] * (windowHeight-2*margin)/ (3*(viewedChannels.length-1))) + (ind/(viewedChannels.length-1))*(windowHeight-2*margin) + margin),
             (point + 1) * dx,
-            (-(data[point + 1] * (windowHeight-2*margin) / (1000*(viewedChannels.length-1))) + (ind/(viewedChannels.length-1))*(windowHeight-2*margin) + margin)
+            (-(data[point + 1] * (windowHeight-2*margin) / (3*(viewedChannels.length-1))) + (ind/(viewedChannels.length-1))*(windowHeight-2*margin) + margin)
           )
         }
       // Electrode Name Text

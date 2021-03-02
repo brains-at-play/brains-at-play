@@ -253,7 +253,7 @@ class Game {
         let freqs;
         let amps;
         this.brains[this.info.access].forEach((user) => {
-            if (user.synthetic || !this.bluetooth.connected){
+            if (user.simulated || !this.bluetooth.connected){
                 user.channelNames.forEach((channelName) => {
 
                     // Generate frequencies if none are given by the user
@@ -1298,7 +1298,7 @@ class Brain {
         let voltage;
         voltage = this.removeDCOffset(this.buffers.voltage)
         if (Array.isArray(filter) && filter.length === 2){
-        voltage = this.bandpass(voltage,filter[0],filter[1])
+            voltage = this.bandpass(voltage,filter[0],filter[1])
         }
 
         if (normalize){

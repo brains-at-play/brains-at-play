@@ -4,7 +4,6 @@ function openDevices() {
   if (document.getElementById("device-card")){
   document.getElementById("device-card").style.transform = "translateX(0%)";
   document.getElementById("devToggle").onclick =function() {closeDevices()};
-  document.getElementById("dev-arrow").style.transform = 'rotate(-45deg)'
   }
 }
 
@@ -12,7 +11,6 @@ function openDevices() {
     if (document.getElementById("device-card")){
     document.getElementById("device-card").style.transform = "translateX(100%)";
     document.getElementById("devToggle").onclick = function() {openDevices()};
-    document.getElementById("dev-arrow").style.transform = 'rotate(135deg)'
     }
   }
 
