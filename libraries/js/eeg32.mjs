@@ -46,7 +46,7 @@ class eeg32 { //Contains structs and necessary functions/API calls to analyze se
 		this.uVperStep = 1000000 * ((this.vref/this.gain)*this.stepSize); //uV per step.
 		this.scalar = 1/(1000000 / ((this.vref/this.gain)*this.stepSize)); //steps per uV.
 
-		this.maxBufferedSamples = this.sps // Short sampling only *60*5; //max samples in buffer this.sps*60*nMinutes = max minutes of data
+		this.maxBufferedSamples = this.sps; // Short sampling only *60*5; //max samples in buffer this.sps*60*nMinutes = max minutes of data
 		
 		this.data = { //Data object to keep our head from exploding. Get current data with e.g. this.data.A0[this.data.counter-1]
 			counter: 0,
@@ -149,8 +149,9 @@ class eeg32 { //Contains structs and necessary functions/API calls to analyze se
 						var channel = "A"+(i-3)/3;
 						this.data[channel][this.data.counter-1]=this.bytesToInt24(line[i],line[i+1],line[i+2]);
 						if(this.data.counter >= this.maxBufferedSamples) { 
-							this.data[channel].splice(0,5120);
-							this.data[channel].push(new Array(5120).fill(0));//shave off the last 10 seconds of data if buffer full (don't use shift())
+							this.data[channel].shift(); this.data[channel].push(0);
+							//this.data[channel].splice(0,5120);
+							//this.data[channel].push(new Array(5120).fill(0));//shave off the last 10 seconds of data if buffer full (don't use shift())
 						}
 							//console.log(this.data[channel][this.data.counter-1],indices[k], channel)
 					}
@@ -161,15 +162,20 @@ class eeg32 { //Contains structs and necessary functions/API calls to analyze se
 
 					
 					if(this.data.counter >= this.maxBufferedSamples) { 
-						this.data["Ax"].splice(0,5120);
-						this.data["Ay"].splice(0,5120);
-						this.data["Az"].splice(0,5120);
-						this.data["Ax"].push(new Array(5120).fill(0))
-						this.data["Ay"].push(new Array(5120).fill(0))
-						this.data["Az"].push(new Array(5120).fill(0))
-						this.data.counter -= 5120;
+						this.data["Ax"].shift(); this.data["Ax"].push(0);
+						this.data["Ay"].shift(); this.data["Ay"].push(0);
+						this.data["Az"].shift(); this.data["Az"].push(0);
+						//this.data["Ax"].splice(0,5120);
+						//this.data["Ay"].splice(0,5120);
+						//this.data["Az"].splice(0,5120);
+						//this.data["Ax"].push(new Array(5120).fill(0))
+						//this.data["Ay"].push(new Array(5120).fill(0))
+						//this.data["Az"].push(new Array(5120).fill(0))
+						//this.data.counter -= 5120;
+						this.data.counter--;
 					}
 					//console.log(this.data)
+					//console.log(this.maxBufferedSamples)
 					newLines++;
 					//console.log(indices[k-1],indices[k])
 					//console.log(buffer[indices[k-1],buffer[indices[k]]])
