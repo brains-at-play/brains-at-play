@@ -2,7 +2,7 @@
   let connectToggle;
   let disconnectToggle;
   let museToggle;
-
+  let freeEEGToggle;
   let margin = 100;
   let colors = []
 
@@ -19,10 +19,16 @@
       connectToggle = createButton('Connect to Server');
       museToggle = createButton('Connect Muse');
       disconnectToggle = createButton('Disconnect');
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
+      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-200-connectToggle.height);
+      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-200-disconnectToggle.height);
+      museToggle.position(windowWidth-25-museToggle.width, windowHeight-125-museToggle.height);
       disconnectToggle.hide()
+      freeEEGToggle = createButton('Connect FreeEEG');
+      freeEEGToggle.position(windowWidth - 25 - freeEEGToggle.width, windowHeight - 50 - freeEEGToggle.height);
+      
+      freeEEGToggle.mousePressed(async () => {
+        game.connectBluetoothDevice('freeEEG32')
+      });
     
     
       // Brains@Play Setup
@@ -31,7 +37,7 @@
       
       museToggle.mousePressed(async () => {
           await game.bluetooth.devices['muse'].connect()
-          game.connectBluetoothDevice(brainsatplay.museClient)
+          game.connectBluetoothDevice('muse')
       });
 
       connectToggle.mousePressed(() => {
@@ -120,13 +126,7 @@
       text('Synchrony', windowWidth / 2, windowHeight-100)
       textStyle(ITALIC)
       textSize(10)
-    
-      if (!game.info.simulated) {
-          text('Live Data Stream', windowWidth / 2, windowHeight-80)
-      } else {
-          text('Synthetic Data Stream', windowWidth / 2, windowHeight-80)
-      }
-      
+
       textStyle(NORMAL)
       if ((game.info.brains === 0 || game.info.brains === undefined) && game.connection.status) {
           text('No brains on the network...', windowWidth / 2, windowHeight/2)
@@ -145,7 +145,9 @@
     
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-125-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-125-disconnectToggle.height);
-      museToggle.position(windowWidth-25-museToggle.width, windowHeight-50-museToggle.height);
+      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-175-connectToggle.height);
+      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-175-disconnectToggle.height);
+      museToggle.position(windowWidth-25-museToggle.width, windowHeight-125-museToggle.height);
+      freeEEGToggle.position(windowWidth - 25 - freeEEGToggle.width, windowHeight - 50 - freeEEGToggle.height);
+
   }

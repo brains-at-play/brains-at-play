@@ -10,7 +10,6 @@ module.exports = {
     path: path.join(__dirname, 'libraries', 'js'),
     publicPath: '/',
     library: 'brainsatplay',
-
   },
   module: {
     rules: [

@@ -1,6 +1,7 @@
 import muse from "muse-js";
 import bci from "bcijs";
 import Fili from 'fili';
+import {eeg32} from '/libraries/js/eeg32.mjs';
 
 /** @module brainsatplay */
 
@@ -17,9 +18,9 @@ class Game {
         this.gameName = gameName;
         this.bluetooth = {
             devices: {
-                'muse': new muse.MuseClient(),
-                // 'freeEEG32': new eeg32()
+                'muse': new muse.MuseClient()
             },
+            deviceType: false,
             connected: false,
             channelNames: [],
         }
@@ -166,11 +167,11 @@ class Game {
      */
 
     simulate(count, amplitudes,frequencies) {
-        if (!this.bluetooth.connected && !this.getUsernames().includes(this.me.username)){
-            this.add('me') 
+        if (!this.bluetooth.connected){
+            this.add('me',undefined, this.simulation.samplerate,true) 
         }
         for (let i = 0; i < count-1; i++) {
-            this.add('other' + (i+1));
+            this.add('other' + (i+1),undefined, this.simulation.samplerate,true);
         }
         this.getMyIndex()
         this.updateUsedChannels()
@@ -181,7 +182,6 @@ class Game {
         }
         this.simulation.generate = true;
         this.simulation.n = count;
-        this.info.simulated = true;
         this.simulation.parameters.frequencies = frequencies
         this.simulation.parameters.amplitudes = amplitudes
     }
@@ -191,20 +191,10 @@ class Game {
      * @method module:brainsatplay.Game.add
      * @description Add a brain to your game.
      */
-    add(id, channelNames, access = 'public') {
-        let brain;
-        if (channelNames === undefined) {
-            brain = new Brain(id)
-        } else {
-            brain = new Brain(id, channelNames)
-        }
-
+    add(id, channelNames, samplerate, simulated, access = 'public') {
+        let brain = new Brain(id,channelNames,samplerate,simulated)
         this.brains[access].set(id, brain)
-        if (id === "me" && this.info.simulated === false) {
-            this.info.brains = this.brains[access].size - 1
-        } else {
-            this.info.brains = this.brains[access].size
-        }
+        this.info.brains = this.brains[access].size
 
         if (access === this.info.access) {
             this.getMyIndex()
@@ -263,7 +253,7 @@ class Game {
         let freqs;
         let amps;
         this.brains[this.info.access].forEach((user) => {
-            if (this.me.username !== user.username || !this.bluetooth.connected){
+            if (user.synthetic || !this.bluetooth.connected){
                 user.channelNames.forEach((channelName) => {
 
                     // Generate frequencies if none are given by the user
@@ -280,7 +270,7 @@ class Game {
                         amps = this.simulation.parameters.amplitudes[userInd]
                     }
 
-                    let samples = this.generateSignal(amps, freqs, this.simulation.samplerate, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
+                    let samples = this.generateSignal(amps, freqs, user.samplerate, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
                     user.loadData({signal:[samples],time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
                 })
             }
@@ -298,6 +288,30 @@ class Game {
             if ((Date.now() - this.simulation.t) > this.simulation.duration*1000) {
                 this.generateVoltageStream()
                 this.simulation.t = Date.now()
+            }
+        }
+
+        if (this.bluetooth.deviceType === 'freeEEG32'){
+            let me = this.brains[this.info.access].get(this.me.username)
+            if (me !== undefined) {
+                let data = new Array(this.bluetooth.adcNames.length)
+                this.bluetooth.adcNames.forEach((name,ind) => {
+                    data[ind] = this.bluetooth.devices['freeEEG32'].data[name]
+                })
+                this.bluetooth.devices['freeEEG32'].resetDataBuffers()
+                if ((this.connection.status)) {
+                    let message = {
+                        destination: 'bci', 
+                        id: this.me.username,
+                    'data': {signal:data,time:[]}
+                    }
+                    this.send('bci',message)
+                } else {
+                    if (this.brains[this.info.access].get(this.me.username)){
+                        console.log(data)
+                    this.brains[this.info.access].get(this.me.username).loadData({signal:data,time:[]})
+                    }
+                }
             }
         }
 
@@ -546,56 +560,106 @@ class Game {
      */
 
 
-    async connectBluetoothDevice(type='muse'){
+    async connectBluetoothDevice(type='muse',map){
 
         let acceptedTypes = ['muse','freeEEG32']
         // only allow connection if not sending data to server
         if (!(this.connection.status)){
-
             if (acceptedTypes.includes(type)){
             if (type === 'muse'){
-        this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
-        await this.bluetooth.devices['muse'].start();
-        this.bluetooth.devices[type].eegReadings.subscribe(r => {
-            let me = this.brains[this.info.access].get(this.me.username)
-            if (me !== undefined) {
-                if ((this.connection.status)) {
-                    let data = new Array(me.numChannels)
-                    data[r.electrode] = r.samples;
-                    let message = {
-                        destination: 'bci', 
-                        id: this.me.username,
-                    'data': {signal:[r.samples],time:[r.timestamp],electrode:r.electrode}
-                    }
-                    this.send('bci',message)
-                } else {
-                    if (this.brains[this.info.access].get(this.me.username)){
-                    this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode})
+        this.bluetooth.devices['muse'].start().then(() => {
+            this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
+            this.bluetooth.devices[type].eegReadings.subscribe(r => {
+                let me = this.brains[this.info.access].get(this.me.username)
+                if (me !== undefined) {
+                    if ((this.connection.status)) {
+                        let data = new Array(me.numChannels)
+                        data[r.electrode] = r.samples;
+                        let message = {
+                            destination: 'bci', 
+                            id: this.me.username,
+                        'data': {signal:[r.samples],time:[r.timestamp],electrode:r.electrode}
+                        }
+                        this.send('bci',message)
+                    } else {
+                        if (this.brains[this.info.access].get(this.me.username)){
+                        this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode})
+                        }
                     }
                 }
-            }
-          })
+              })
+            
+            this.commonBluetoothSetup(type)
+        });
         } else if (type='freeEEG32'){
-            this.bluetooth.channelNames = 
-            'TP9,AF7,AF8,TP10,AUX' // Muse 
-            eeg.setupSerialAsync()
+            this.bluetooth.devices['freeEEG32'] = new eeg32();
+            this.bluetooth.devices[type].setupSerialAsync().then(() => {
+                if (map){
+                    this.bluetooth.adcMap = map;
+                } else {
+                    this.bluetooth.adcMap = {
+                        A0: 'O2',
+                        A1: 'T6',
+                        A2: 'T4',
+                        A3: 'F8',
+                        A4: 'Fp2',
+                        A5: 'F4',
+                        A6: 'C4',
+                        A7: 'P4',
+                        A8: '',
+                        A9: '',
+                        A10: '',
+                        A11: '',
+                        A12: 'Pz',
+                        A13: '',
+                        A14: '',
+                        A15: '',
+                        A16: 'Fz',
+                        A17: '',
+                        A18: '',
+                        A19: '',
+                        A20: '',
+                        A21: '',
+                        A22: '',
+                        A23: '',
+                        A24: 'Fp1',
+                        A25: 'F3',
+                        A26: 'C3',
+                        A27: 'P3',
+                        A28: 'O1',
+                        A29: 'T5',
+                        A30: 'T3',
+                        A31: 'F7',
+                    }
+                }
+                this.bluetooth.adcNames = Object.keys(this.bluetooth.adcMap).filter(key => this.bluetooth.adcMap[key] != '')
+                this.bluetooth.channelNames =this.bluetooth.adcNames.map((key) => key=this.bluetooth.adcMap[key])
+                this.bluetooth.channelNames = this.bluetooth.channelNames.join(',')
+                this.bluetooth.samplerate = this.bluetooth.devices['freeEEG32'].sps;
+                this.commonBluetoothSetup(type)
+            })
         }
-        let prevData = this.brains[this.info.access].get(this.me.username).data
-        this.remove(this.me.username)
-        if (this.connection.status){
-            this.add(this.me.username, this.bluetooth.channelNames)
-        } else {
-            this.add(this.me.username, this.bluetooth.channelNames)
-        }
-        this.brains[this.info.access].get(this.me.username).data = prevData
-        this.updateBrainRoutine()
-        this.bluetooth.connected = true;
     } else {
             console.error('No Bluetooth compatibility with devices of type: ' + type)
         }
     } else {
         console.error('Please connect your Muse before connecting to the server.')
     }
+    }
+
+    /**
+     * @ignore
+     * @method module:brainsatplay.Game.commonBluetoothSetup
+     * @description A utility function to replace existing synthetic data with a Bluetooth stream.
+     */
+    commonBluetoothSetup(type){
+        this.bluetooth.deviceType = type
+        let prevData = this.brains[this.info.access].get(this.me.username).data
+        this.remove(this.me.username)
+        this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,false)
+        this.brains[this.info.access].get(this.me.username).data = prevData
+        this.updateBrainRoutine()
+        this.bluetooth.connected = true;
     }
 
     /**
@@ -664,7 +728,6 @@ class Game {
         if (connection){
                 connection.onerror = () => {
                     this.setUpdateMessage({destination: 'error'})
-                    this.info.simulated = true
                 };
         
                 connection.onopen = () => {
@@ -682,11 +745,11 @@ class Game {
                         }
                     } else if (obj.destination === 'init') {
                         if (obj.privateBrains) {
-                            this.add(obj.privateInfo.id, obj.privateInfo.channelNames, 'private')
+                            this.add(obj.privateInfo.id, obj.privateInfo.channelNames, undefined,false, 'private')
                         } else {
                             for (let newUser = 0; newUser < obj.nBrains; newUser++) {
                                 if (this.brains.public.get(obj.ids[newUser]) === undefined && obj.ids[newUser] !== undefined) {
-                                    this.add(obj.ids[newUser], obj.channelNames[newUser])
+                                    this.add(obj.ids[newUser], obj.channelNames[newUser],undefined,false)
                                 }
                             }
                         }
@@ -704,7 +767,7 @@ class Game {
                         let update = obj.n;
                         // Only update if access matches
                         if (update === 1) {
-                            this.add(obj.id, obj.channelNames, obj.access)
+                            this.add(obj.id, obj.channelNames, undefined, false, obj.access)
                         } else if (update === -1) {
                             this.remove(obj.id, obj.access)
                         }
@@ -717,7 +780,7 @@ class Game {
                         let update = obj.n;
                         // Only update if access matches
                         if (update === 1) {
-                            this.add(obj.id, obj.channelNames, obj.access)
+                            this.add(obj.id, obj.channelNames, undefined, false, obj.access)
                         } else if (update === -1) {
                             this.remove(obj.id, obj.access)
                         }
@@ -1094,13 +1157,18 @@ class Game {
  */
 
 class Brain {
-    constructor(userId, channelNames){
+    constructor(userId, channelNames, samplerate,simulated=false){
         this.username = userId;
         this.eegCoordinates = eegCoordinates
         this.usedChannels = []
         this.channelNames = []
-        this.samplerate = 200;
+        if (samplerate){
+            this.samplerate = samplerate;
+        } else {
+            this.samplerate = 200;
+        }
         this.data = {}
+        this.simulated = simulated;
         this.blink.threshold = 500 // uV
         this.blink.duration = 50 // samples
         this.blink.lastBlink = 0;
@@ -1113,7 +1181,6 @@ class Brain {
         channelNames = channelNames.toLowerCase().split(',')
         channelNames.forEach((name) => {
             let capName = name.charAt(0).toUpperCase() + name.slice(1)
-            console.log()
             if (capName.charAt(1) == 'o'){
                 capName = capName.charAt(0) + 'O' + capName.slice(2)
             }
@@ -1545,6 +1612,15 @@ const eegCoordinates = {
     O1: [-25.8, -93.3, 7.7],
     Oz: [0.3, -97.1, 8.7],
     O2: [25.0, -95.2, 6.2],
-    Tp9: [-63.6, -44.7, -4.0], //TP7
-    Tp10: [64.6, -45.4, -3.7] //TP8
+
+    // Missing coordinates for Muse
+    Tp9: [-63.6, -44.7, -4.0], // Same as TP7
+    Tp10: [64.6, -45.4, -3.7], // Same as TP8
+
+
+    // Missing coordinates for FreeEEG32
+    T3: [-70.2, -21.3, -10.7],
+    T4: [71.9,-25.2,-8.2],
+    T5: [-61.5, -65.3, 1.1],
+    T6: [59.3, -67.6,  3.8],
 }
