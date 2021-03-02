@@ -298,7 +298,6 @@ class Game {
                 this.bluetooth.adcNames.forEach((name,ind) => {
                     data[ind] = this.bluetooth.devices['freeEEG32'].data[name]
                 })
-                this.bluetooth.devices['freeEEG32'].resetDataBuffers()
                 if ((this.connection.status)) {
                     let message = {
                         destination: 'bci', 
