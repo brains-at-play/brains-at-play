@@ -17,7 +17,8 @@ class Game {
         this.gameName = gameName;
         this.bluetooth = {
             devices: {
-                'muse': new muse.MuseClient()
+                'muse': new muse.MuseClient(),
+                // 'freeEEG32': new eeg32()
             },
             connected: false,
             channelNames: [],
@@ -355,7 +356,7 @@ class Game {
      * @param username {string} [username=this.me.username] The user to return voltage data from.
      */
 
-    async getMetric(metricName,username) {
+    async getMetric(metricName,username,relative,filter) {
         // if ((this.connection === undefined) || (location === 'local')){
             if (metricName !== undefined){
         if (metricName === 'synchrony') {
@@ -374,9 +375,9 @@ class Game {
             return dict
         } else {
             if (this.brains[this.info.access].has(username)){
-                return this.brains[this.info.access].get(username).getMetric(metricName)              
+                return this.brains[this.info.access].get(username).getMetric(metricName,relative,filter)              
             } else {
-                return this.brains[this.info.access].get(this.me.username).getMetric(metricName)              
+                return this.brains[this.info.access].get(this.me.username).getMetric(metricName,relative,filter)              
             }
         } 
     } else {
@@ -547,21 +548,14 @@ class Game {
 
     async connectBluetoothDevice(type='muse'){
 
+        let acceptedTypes = ['muse','freeEEG32']
         // only allow connection if not sending data to server
         if (!(this.connection.status)){
+
+            if (acceptedTypes.includes(type)){
             if (type === 'muse'){
         this.bluetooth.channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
         await this.bluetooth.devices['muse'].start();
-        let prevData = this.brains[this.info.access].get(this.me.username).data
-        this.remove(this.me.username)
-        if (this.connection.status){
-            this.add(this.me.username, this.bluetooth.channelNames)
-        } else {
-            this.add(this.me.username, this.bluetooth.channelNames)
-        }
-        this.brains[this.info.access].get(this.me.username).data = prevData
-        this.updateBrainRoutine()
-        this.bluetooth.connected = true;
         this.bluetooth.devices[type].eegReadings.subscribe(r => {
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
@@ -581,8 +575,22 @@ class Game {
                 }
             }
           })
+        } else if (type='freeEEG32'){
+            this.bluetooth.channelNames = 
+            'TP9,AF7,AF8,TP10,AUX' // Muse 
+            eeg.setupSerialAsync()
         }
-        else {
+        let prevData = this.brains[this.info.access].get(this.me.username).data
+        this.remove(this.me.username)
+        if (this.connection.status){
+            this.add(this.me.username, this.bluetooth.channelNames)
+        } else {
+            this.add(this.me.username, this.bluetooth.channelNames)
+        }
+        this.brains[this.info.access].get(this.me.username).data = prevData
+        this.updateBrainRoutine()
+        this.bluetooth.connected = true;
+    } else {
             console.error('No Bluetooth compatibility with devices of type: ' + type)
         }
     } else {
@@ -1105,11 +1113,15 @@ class Brain {
         channelNames = channelNames.toLowerCase().split(',')
         channelNames.forEach((name) => {
             let capName = name.charAt(0).toUpperCase() + name.slice(1)
+            console.log()
+            if (capName.charAt(1) == 'o'){
+                capName = capName.charAt(0) + 'O' + capName.slice(2)
+            }
             if (Object.keys(this.eegCoordinates).indexOf(capName) !== -1){
                 this.channelNames.push(capName)
                 this.usedChannels.push({name:capName, index: Object.keys(this.eegCoordinates).indexOf(capName)})
             } else {
-                console.log(name + ' electrode is not currently supported.')
+                console.log(capName + ' electrode is not currently supported.')
             }
         })
 
