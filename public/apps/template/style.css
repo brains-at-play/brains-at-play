@@ -1,4 +1,8 @@
-  html, body {
+/* * {
+    box-sizing: border-box;
+}
+  */
+ html, body {
   width: 100%;
   height: 100%;
   font-family: Lato, sans-serif;
@@ -6,6 +10,7 @@
   background: black;
   margin: 0;
 }
+
 
 canvas {
   background-color: black;

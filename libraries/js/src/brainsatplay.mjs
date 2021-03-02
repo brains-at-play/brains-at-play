@@ -295,8 +295,10 @@ class Game {
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
                 let data = new Array(this.bluetooth.adcNames.length)
-                this.bluetooth.adcNames.forEach((name,ind) => {
-                    data[ind] = this.bluetooth.devices['freeEEG32'].data[name]
+                Object.keys(this.bluetooth.adcMap).forEach((name,ind) => {
+                    if (this.bluetooth.adcNames.includes(name)){
+                        data[ind] = this.bluetooth.devices['freeEEG32'].data[name]
+                    }
                 })
                 if ((this.connection.status)) {
                     let message = {

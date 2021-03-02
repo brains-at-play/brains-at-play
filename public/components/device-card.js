@@ -25,28 +25,15 @@ function openDevices() {
     }
 
   connectedCallback() {
-    let name = this.getAttribute("name")
-    let author = this.getAttribute("author")
-    let website = this.getAttribute("website")
-    let description = this.getAttribute("description")
-    let links = JSON.parse(this.getAttribute("links"))
-
     let html = `
     <style>
-    svg {
-      flex: none;
-      fill: lightgrey;
-      transition: .5s;
-      width: 20px;
-      margin: 10px;
-  }
 
     #device-card {
+      box-sizing: border-box;
       display: block;
       position: fixed;
       top: 0;
       right: 0;
-      width: 200px;
       height: 100vh;
       transform: translateX(100%);
       padding: 25px;
@@ -90,8 +77,9 @@ function openDevices() {
   }
 
   .device-icon {
+      box-sizing: border-box;
       position: fixed;
-      right: 200px;
+      right: 100%;
       top: 25px;
       transform: translateX(-100%);
       padding: 1em;
@@ -185,9 +173,14 @@ function openDevices() {
             <span class="tooltiptext"><p>Connect a Muse Headband</p><hr/><p class="small">Connect your Muse headband over Bluetooth. Chrome only.</p></span>
         </button>
 
-        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32')            ">
-            FreeEEG32
-            <span class="tooltiptext"><p>Connect a FreeEEG32 Device</p><hr/><p class="small">Connect a FreeEEG32 device over Serial. Chrome only.</p></span>
+        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32');">
+            FreeEEG32 - 19 Channels
+            <span class="tooltiptext"><p>Connect a 19-Channel FreeEEG32 Device</p><hr/><p class="small">Connect a 19-channel FreeEEG32 device over Serial. Chrome only.</p></span>
+        </button>
+
+        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32',{A4:'Fp2',A24:'Fp1'});">
+            FreeEEG32 - 2 Channels
+            <span class="tooltiptext"><p>Connect a 2-Channel FreeEEG32 Device</p><hr/><p class="small">Connect a 2-channel FreeEEG32 device over Serial. Chrome only.</p></span>
         </button>
         
     `;

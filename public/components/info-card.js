@@ -31,6 +31,7 @@ function openInfo() {
     let html = `
     <style>
     svg {
+      box-sizing: border-box;
       flex: none;
       fill: lightgrey;
       transition: .5s;
@@ -39,6 +40,7 @@ function openInfo() {
   }
 
     #info-card {
+      box-sizing: border-box;
       display: block;
       position: fixed;
       top: 0;
@@ -86,6 +88,7 @@ function openInfo() {
   }
 
   .info-icon {
+      box-sizing: border-box;
       position: fixed;
       right: 0px;
       top: 25px;
