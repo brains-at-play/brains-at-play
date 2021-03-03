@@ -14,27 +14,10 @@
       createCanvas(400, 400);
       textAlign(CENTER, CENTER);
       resizeCanvas(windowWidth, windowHeight);
-      connectToggle = createButton('Connect to Server');
-      disconnectToggle = createButton('Disconnect');
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-50-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-50-disconnectToggle.height);
-      disconnectToggle.hide()
 
       // Brains@Play Setup
       game = new brainsatplay.Game('template')
       game.simulate(2);
-
-      connectToggle.mousePressed(() => {
-          game.connect({'guestaccess': true})
-          disconnectToggle.show()
-          connectToggle.hide()
-      });
-    
-      disconnectToggle.mousePressed(() => {
-          game.disconnect()
-          disconnectToggle.hide()
-          connectToggle.show()
-      })
     }
     
     draw = () => {
@@ -126,6 +109,4 @@
     
     windowResized = () => {
       resizeCanvas(windowWidth, windowHeight);
-      connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-50-connectToggle.height);
-      disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-50-disconnectToggle.height);
   }

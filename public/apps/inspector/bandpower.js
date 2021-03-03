@@ -15,22 +15,11 @@ setup = () => {
   createCanvas(400, 400);
   textAlign(CENTER, CENTER);
   resizeCanvas(windowWidth, windowHeight);
-  museToggle = createButton('Connect Muse');
-  museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
-
 
   // Brains@Play Setup
   game = new brainsatplay.Game('inspector')
-  game.simulate(1,[[100,100,100,100,100]],[[8,9,10,11,12]])
-  // game.simulate(1, [
-  //   [100, 100, 100]
-  // ], [
-  //   [1, 2, 3]
-  // ])
-  museToggle.mousePressed(async () => {
-    await game.bluetooth.devices['muse'].connect()
-    game.connectBluetoothDevice(brainsatplay.museClient)
-  });
+  game.simulate(1)
+  // game.simulate(1,[[100,100,100,100,100]],[[8,9,10,11,12]])
 
   // Assign each value in bandpowers dictionary a buffers array 
   bandNames.forEach((bandname) => {
@@ -49,12 +38,6 @@ setup = () => {
 }
 
 draw = () => {
-
-  if (game.bluetooth.connected) {
-    museToggle.hide()
-  } else {
-    museToggle.show()
-  }
 
   background(0);
   noStroke()
@@ -84,6 +67,7 @@ draw = () => {
         fill(colors[bandInd])
         noStroke()
         text(bandDict.average,100+100,50 + 50*bandInd)
+
         noFill()
         bandDict.channels.forEach((val, channel) => {
           bandpowers[bandName][channel].shift()
@@ -101,14 +85,6 @@ draw = () => {
           let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length;
           let voltageScaling = -25
           let signalWidth = 100
-          
-          // Zero Line
-          stroke(0,225,255)
-          line(centerX - (signalWidth + 10) / 2,
-            centerY,
-            centerX + (signalWidth + 10) - (signalWidth + 10) / 2,
-            centerY
-          )
 
 
           // Colored Line
@@ -121,6 +97,14 @@ draw = () => {
               centerY + voltageScaling * buffer[sample + 1]
             )
           }
+
+          // Zero Line
+          stroke(0,225,255)
+          line(centerX - (signalWidth + 10) / 2,
+            centerY,
+            centerX + (signalWidth + 10) - (signalWidth + 10) / 2,
+            centerY
+          )
         })
       });
     })
@@ -130,5 +114,4 @@ draw = () => {
 
 windowResized = () => {
   resizeCanvas(windowWidth, windowHeight);
-  museToggle.position(windowWidth - 25 - museToggle.width, windowHeight - 50 - museToggle.height);
 }

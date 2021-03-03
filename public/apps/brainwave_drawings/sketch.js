@@ -16,8 +16,6 @@ let trace;
 let capture;
 let geolocation = {location: {lat:NaN,lng:NaN}};
 let mapToggle;
-let connectToggle;
-let disconnectToggle;
 let voltageBuffers =  Array.from({length: 2}, e => [])
 let maxBufferSize = 500;
 
@@ -49,23 +47,6 @@ function setup() {
     capture = undefined;
     mapToggle.hide()
   });
-
-  connectToggle = createButton('Connect to Server');
-  disconnectToggle = createButton('Disconnect');
-  connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-100-connectToggle.height);
-  disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-100-disconnectToggle.height);
-  disconnectToggle.hide()
-  connectToggle.mousePressed(() => {
-    game.connect({'guestaccess': true})
-    disconnectToggle.show()
-    connectToggle.hide()
-});
-
-disconnectToggle.mousePressed(() => {
-    game.disconnect()
-    disconnectToggle.hide()
-    connectToggle.show()
-})
 }
 
 function draw() {
@@ -129,8 +110,6 @@ windowResized = () => {
   resizeCanvas(windowWidth, windowHeight);
   trace.center = [windowWidth/2,windowHeight/2];
   mapToggle.position(windowWidth - 25 - mapToggle.width, windowHeight - 25 - mapToggle.height);
-  connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-100-connectToggle.height);
-  disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-100-disconnectToggle.height);
 }
 
 function translateMercatorToScreen(x, y, d) {

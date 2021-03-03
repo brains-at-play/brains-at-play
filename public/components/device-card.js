@@ -3,6 +3,8 @@
 function openDevices() {
   if (document.getElementById("device-card")){
   document.getElementById("device-card").style.transform = "translateX(0%)";
+  document.getElementById("device-card").style.zIndex = "1001";
+
   document.getElementById("devToggle").onclick =function() {closeDevices()};
   }
 }
@@ -11,6 +13,7 @@ function openDevices() {
     if (document.getElementById("device-card")){
     document.getElementById("device-card").style.transform = "translateX(100%)";
     document.getElementById("devToggle").onclick = function() {openDevices()};
+    document.getElementById("device-card").style.zIndex = "1000";
     }
   }
 
@@ -38,7 +41,7 @@ function openDevices() {
       transform: translateX(100%);
       padding: 25px;
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6));
-      z-index: 100;
+      z-index: 1000;
 
       transition: 0.5s ease-in-out;
       -o-transition: 0.5s ease-in-out;
@@ -79,12 +82,15 @@ function openDevices() {
   .device-icon {
       box-sizing: border-box;
       position: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       right: 100%;
       top: 25px;
       transform: translateX(-100%);
       padding: 1em;
       width: 40px;
-      z-index: 1000;
+      z-index: 0;
       transition: 0.5s ease-in-out;
       -o-transition: 0.5s ease-in-out;
       -ms-transition: 0.5s ease-in-out;
@@ -92,21 +98,19 @@ function openDevices() {
       -webkit-transition: 0.5s ease-in-out;
   }
 
-  .arrow {
-      border: solid white;
-      border-width: 0 5px 5px 0;
-      display: inline-block;
-      padding: 5px;
-      transition: 0.5s ease-in-out;
-      -o-transition: 0.5s ease-in-out;
-      -ms-transition: 0.5s ease-in-out;
-      -moz-transition: 0.5s ease-in-out;
-      -webkit-transition: 0.5s ease-in-out;
+  #device-label {
+    position: relative;
+    display: block;
+    white-space: nowrap
   }
 
-  .left {
-      transform: rotate(135deg);
-      -webkit-transform: rotate(135deg);
+  #label-text {
+      color: white;
+      padding: 10px 10px;
+      border-radius: 6px;
+      transform: translateY(-50%) translateX( calc(-100% - 40px));
+      position: fixed;
+      z-index: 1;
   }
 
   /* Tooltip container */
@@ -165,6 +169,9 @@ function openDevices() {
       <div id="device-card">
       <div id="devToggle" onclick="openDevices()" class="device-icon">
       <i class="fas fa-brain fa-lg"></i>
+      <div id="device-label">
+        <span id="label-text"><p class="small">Connect your Brain</p></span>
+      </div>
       </div>
         <h4>Connect an EEG Device</h4>
         <br/>

@@ -1,5 +1,3 @@
-let connectToggle;
-let disconnectToggle;
 
 let margin = 100;
 let colors = []

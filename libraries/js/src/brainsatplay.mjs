@@ -255,7 +255,6 @@ class Game {
         this.brains[this.info.access].forEach((user) => {
             if (user.simulated || !this.bluetooth.connected){
                 user.channelNames.forEach((channelName) => {
-
                     // Generate frequencies if none are given by the user
                     if (this.simulation.parameters.frequencies === undefined){
                         freqs = Array.from({length: n}, e => Math.random() * 50)
@@ -269,8 +268,7 @@ class Game {
                     } else {
                         amps = this.simulation.parameters.amplitudes[userInd]
                     }
-
-                    let samples = this.generateSignal(amps, freqs, user.samplerate, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
+                    let samples = this.generateSignal(amps, freqs, user.samplerate.default, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
                     user.loadData({signal:[samples], time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
                 })
             }
@@ -1173,10 +1171,12 @@ class Brain {
         this.eegCoordinates = eegCoordinates
         this.usedChannels = []
         this.channelNames = []
+        this.samplerate = {estimate: 0}
+        this.samplerate.default = samplerate
         if (samplerate){
-            this.samplerate = samplerate;
+            this.samplerate.default = samplerate
         } else {
-            this.samplerate = 200;
+            this.samplerate.default = 200;
         }
         this.data = {}
         this.simulated = simulated;
@@ -1206,12 +1206,12 @@ class Brain {
         this.bufferSize = 1000 // Samples
         this.buffers = {
             voltage: Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
-                return Array(this.bufferSize).fill(0)
+                return []
             } else {
                 return [NaN]
             }}),
-            time: Array.from({length: Object.keys(this.eegCoordinates).length}, e => {if (this.channelNames.includes(e)){
-                return Array(this.bufferSize).fill(0)
+            time: Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
+                return []
             } else {
                 return [NaN]
             }})
@@ -1259,10 +1259,19 @@ class Brain {
                     if (Object.keys(data).includes('electrode')){
                         channel = data.electrode
                     }
-                    this.buffers.voltage[this.usedChannels[channel].index].splice(0,channelData.length)
+                    // this.buffers.voltage[this.usedChannels[channel].index].splice(0,channelData.length)
                     this.buffers.voltage[this.usedChannels[channel].index].push(...channelData);
-                    this.buffers.time[this.usedChannels[channel].index].splice(0,time.length)
                     this.buffers.time[this.usedChannels[channel].index].push(...time);
+
+                    let tDiff = this.buffers.time[this.usedChannels[channel].index].length - this.bufferSize
+                    if (tDiff > 0){
+                        this.buffers.time[this.usedChannels[channel].index].splice(0,tDiff)
+                    }
+
+                    let vDiff = this.buffers.voltage[this.usedChannels[channel].index].length - this.bufferSize
+                    if (vDiff > 0){
+                        this.buffers.voltage[this.usedChannels[channel].index].splice(0,vDiff)
+                    }
 
                     if (this.storage.store === true){
                         let diff = this.storage.samples - this.storage.count[channel];
@@ -1293,13 +1302,14 @@ class Brain {
             this.data[field] = data[field]
         })
 
-        // let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
-        // if (timeElapsed !== 0){
-        //     this.samplerate = this.buffers.time[this.usedChannels[0].index].length / timeElapsed
-        // } else {
-        //     this.samplerate = 0
-        // }
-
+        if (this.usedChannels.length > 0){
+            let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
+            if (timeElapsed > 0){
+                this.samplerate.estimate = Math.floor(this.buffers.time[this.usedChannels[0].index].length / timeElapsed)
+            } else {
+                this.samplerate.estimate = Math.floor(this.samplerate.default)
+            }
+        }
     }
 
     /**
@@ -1443,15 +1453,19 @@ class Brain {
      */
     bandpower(band, filter,relative=true) {
             let voltage;
+            
             voltage = this.removeDCOffset(this.buffers.voltage)
             if (Array.isArray(filter) && filter.length === 2){
                 voltage = this.bandpass(voltage,filter[0],filter[1])
             }
 
             let bandpower = new Array(Object.keys(this.eegCoordinates).length).fill(NaN);
+            
             voltage.forEach((channelData,ind) => {
-                if (!channelData.includes(NaN)){
-                    bandpower[ind] = bci.bandpower(channelData, this.samplerate, band, {relative: relative});
+                if (channelData.length > this.samplerate.estimate/2 || channelData.length === this.bufferSize){ // Check with Nyquist sampling theorem
+                    if (!channelData.includes(NaN)){
+                        bandpower[ind] = bci.bandpower(channelData, this.samplerate.estimate, band, {relative: relative});
+                    }
                 }
             })
 
@@ -1470,7 +1484,7 @@ class Brain {
     bandpass(data,lowFreq=0.1,highFreq=100){
         let filterOrder = 128;
         let firCalculator = new Fili.FirCoeffs();
-        let coeffs = firCalculator.bandpass({order: filterOrder, Fs: this.samplerate, F1: lowFreq, F2: highFreq});
+        let coeffs = firCalculator.bandpass({order: filterOrder, Fs: this.samplerate.estimate, F1: lowFreq, F2: highFreq});
         let filter = new Fili.FirFilter(coeffs);
         data.filter(channelData => channelData != [NaN])
         let channels = bci.transpose(data);

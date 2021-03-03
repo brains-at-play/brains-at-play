@@ -49,7 +49,7 @@ function openInfo() {
       width: 400px;
       padding: 25px;
       background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6));
-      z-index: 100;
+      z-index: 1000;
 
       transition: 0.5s ease-in-out;
       -o-transition: 0.5s ease-in-out;
@@ -90,12 +90,15 @@ function openInfo() {
   .info-icon {
       box-sizing: border-box;
       position: fixed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       right: 0px;
       top: 25px;
       transform: translateX(150%);
       padding: 1em;
       width: 40px;
-      z-index: 1000;
+      z-index: 100;
       transition: 0.5s ease-in-out;
       -o-transition: 0.5s ease-in-out;
       -ms-transition: 0.5s ease-in-out;
