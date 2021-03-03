@@ -132,7 +132,7 @@ async function signup(){
       position: fixed;
       top: 0;
       right: 0;
-      min-width: 40vw;
+      width: 40vw;
       height: 100vh;
       transform: translateX(100%);
       padding: 25px;
@@ -334,7 +334,17 @@ input:focus{
       <div id="controls-container">
       <div>
         <h3>Welcome <span id="username"></span>.</h3><p>You have been connected to <span id="gamename"></span>.</p>
+        <div id="access-mode-div" class="under-header-info">
+        <p id="access-mode" class="small">Public Mode</p>
+        <label id="access-switch" class="switch">
+            <input type="checkbox" onchange="toggleAccess()" checked>
+            <span class="slider round"></span>
+          </label>
         </div>
+        <br/>
+        <br/>
+        <button onclick="game.disconnect();toggleUserControls();toggleLoginScreen();closeConnectCard()">Disconnect from Game</button>
+    </div>
     </div>
 
 
@@ -342,7 +352,7 @@ input:focus{
       <div id="login" class="form-context">
           <h3>Sign In</h3>
           <p id="login-message" class="small"></p>
-          <div class='flex'>
+          <div>
               <form id="login-form" action="">
                   <div class="login-element">
                       <input type="text" name="username" autocomplete="off" placeholder="Username or email"/>

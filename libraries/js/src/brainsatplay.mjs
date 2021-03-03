@@ -673,7 +673,6 @@ class Game {
 
     disconnect() {
         this.connection.ws.close();
-        this.setUpdateMessage({destination: 'closed'})
     }
 
     /**
@@ -813,6 +812,7 @@ class Game {
                     })
                     this.simulate(this.simulation.n)
                     this.getMyIndex()
+                    this.setUpdateMessage({destination: 'closed'})
                 };
         }
         return connection
@@ -1321,7 +1321,7 @@ class Brain {
     getVoltage(normalize=false, filters=[{type:'notch',freq_notch:50},{type:'notch',freq_notch:60},{type:'bandpass',freq_low:1, freq_high: 50}]){
         
         let voltage = this.removeDCOffset(this.buffers.voltage)
-        if (Array.isArray(filter)){
+        if (Array.isArray(filters)){
             voltage = this.filter(voltage,filters)
         }
 
@@ -1337,13 +1337,13 @@ class Brain {
      * @description Returns the specified metric.
      * @param metricName {string} Choose between 'power', 'delta', 'theta', 'alpha', 'beta', 'gamma'
      */
-    async getMetric(metricName,relative,filter){
+    async getMetric(metricName,relative,filters){
             let dict = {};
             // Derive Channel Readouts
             if (metricName === 'power') {
-                dict.channels = this.power(filter,relative)
+                dict.channels = this.power(filters,relative)
             } else if (['delta', 'theta', 'alpha', 'beta', 'gamma'].includes(metricName)) {
-                dict.channels = this.bandpower(metricName, filter, relative)
+                dict.channels = this.bandpower(metricName, filters, relative)
             }
 
             // Get Values of Interest
@@ -1428,9 +1428,9 @@ class Brain {
      * @method module:brainsatplay.Brain.power
      * @description Returns voltage power.
      */
-    power(filter=[], relative = false) {
+    power(filters, relative = false) {
 
-            let voltage = this.getVoltage(false,filter);
+            let voltage = this.getVoltage(false,filters);
             let power = new Array(Object.keys(this.eegCoordinates).length);
             voltage.forEach((channelData,ind) => {
                 power[ind] = channelData.reduce((acc, cur) => acc + (Math.pow(cur, 2) / 2), 0) / channelData.length
@@ -1447,9 +1447,9 @@ class Brain {
      * @method module:brainsatplay.Brain.bandpower
      * @description Returns bandpower in the specified EEG band.
      */
-    bandpower(band, filter,relative=true) {
+    bandpower(band, filters,relative=true) {
 
-            let voltage =this.getVoltage(false,filter);
+            let voltage =this.getVoltage(false,filters);
             let bandpower = new Array(Object.keys(this.eegCoordinates).length).fill(NaN);
             
             voltage.forEach((channelData,ind) => {
@@ -1475,7 +1475,7 @@ class Brain {
     filter(data, filterArray){
         let dataRed = data.filter(channelData => !isNaN(channelData[0]))
         if (dataRed.length !== 0){
-            filters = filterArray;
+            let filters = filterArray;
             filterArray.forEach((dict,ind) => {
                 if (dict.filter === 'notch'){
                     filters[ind] = new Biquad('notch',parameters[ind].freq_notch,this.samplerate.estimate,Biquad.calcNotchQ(parameters[ind].freq_notch,1),0);
