@@ -74,7 +74,6 @@ draw = () => {
           bandpowers[bandName][channel].push(val)
         })
 
-        // let voltage = brain.getVoltage();
         brain.usedChannels.forEach((channelDict, ind) => {
           let [x, y, z] = brain.eegCoordinates[channelDict.name]
 

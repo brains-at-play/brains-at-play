@@ -78,8 +78,8 @@ function draw() {
 
     // Push buffer values to the EEG trace
     trace.update(
-      trace.center[0] + meV[meV.length - 1]*Math.min(windowWidth,windowHeight)/4,
-      trace.center[1] + youV[youV.length - 1]*Math.min(windowWidth,windowHeight)/4
+      trace.center[0] + (meV[meV.length - 1]-0.5)*Math.min(windowWidth,windowHeight)/2,
+      trace.center[1] + (youV[youV.length - 1]-0.5)*Math.min(windowWidth,windowHeight)/2
     )
 
     // Image

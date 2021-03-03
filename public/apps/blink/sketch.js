@@ -44,7 +44,6 @@ draw = () => {
     textSize(25)
     let brain = game.brains[game.info.access].get(game.me.username)
     let [leftBlink, rightBlink] = brain.blink()
-    console.log(leftBlink, rightBlink)
     let contactQuality = brain.contactQuality(brain.blink.threshold,brain.blink.duration)
 
     // Move Ball
@@ -126,6 +125,8 @@ draw = () => {
       fill(255)
       noStroke()
     } else {
+      fill(255)
+      text('Connect your brain to begin.', windowWidth/2, windowHeight/2)
       noFill();
       stroke(255)
     }

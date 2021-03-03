@@ -36,6 +36,7 @@ draw = () => {
     let brain = game.brains[game.info.access].get(game.me.username)
      if (brain !== undefined){
     let voltage = brain.getVoltage();
+
     brain.usedChannels.forEach((channelDict,ind) => {
         let [x, y, z] = brain.eegCoordinates[channelDict.name]
         

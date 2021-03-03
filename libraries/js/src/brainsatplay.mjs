@@ -2,6 +2,7 @@ import muse from "muse-js";
 import bci from "bcijs";
 import Fili from 'fili';
 import {eeg32} from '/libraries/js/eeg32.mjs';
+import {Biquad} from '/libraries/js/biquad.mjs';
 
 /** @module brainsatplay */
 
@@ -334,11 +335,11 @@ class Game {
      * @param username {string} The user to return voltage data from.
      * @param normalize {boolean} Normalize voltage data between 0 and 1.
      */
-    getVoltage(username,normalize) {
+    getVoltage(username,normalize,filter) {
         if (this.brains[this.info.access].has(username)){
-            return this.brains[this.info.access].get(username).getVoltage(username,normalize)              
+            return this.brains[this.info.access].get(username).getVoltage(normalize,filter)              
         } else {
-            return this.brains[this.info.access].get(this.me.username).getVoltage(username,normalize)              
+            return this.brains[this.info.access].get(this.me.username).getVoltage(normalize,filter)              
         }
     }
 
@@ -469,8 +470,8 @@ class Game {
                 // Source: http://stevegardner.net/2012/06/11/javascript-code-to-calculate-the-pearson-correlation-coefficient/
 
                 edgesArray.forEach((edge) => {
-                    let xC = this.brains[this.info.access].get(edge[0]).getVoltage()
-                    let yC = this.brains[this.info.access].get(edge[1]).getVoltage()
+                    let xC = this.brains[this.info.access].get(edge[0]).getVoltage();
+                    let yC = this.brains[this.info.access].get(edge[1]).getVoltage();
                     this.usedChannelNames.forEach((_,ind) => {
                         let channel = this.usedChannels[ind].index
                         let x = xC[channel]
@@ -1316,11 +1317,12 @@ class Brain {
      * @method module:brainsatplay.Brain.getVoltage
      * @description Returns voltage buffer from the brain (channels x samples)
      */
-    getVoltage(normalize=false,filter=[]){
-        let voltage;
-        voltage = this.removeDCOffset(this.buffers.voltage)
-        if (Array.isArray(filter) && filter.length === 2){
-            voltage = this.bandpass(voltage,filter[0],filter[1])
+
+    getVoltage(normalize=false, filters=[{type:'notch',freq_notch:50},{type:'notch',freq_notch:60},{type:'bandpass',freq_low:1, freq_high: 50}]){
+        
+        let voltage = this.removeDCOffset(this.buffers.voltage)
+        if (Array.isArray(filter)){
+            voltage = this.filter(voltage,filters)
         }
 
         if (normalize){
@@ -1335,7 +1337,7 @@ class Brain {
      * @description Returns the specified metric.
      * @param metricName {string} Choose between 'power', 'delta', 'theta', 'alpha', 'beta', 'gamma'
      */
-    async getMetric(metricName,relative,filter=[]){
+    async getMetric(metricName,relative,filter){
             let dict = {};
             // Derive Channel Readouts
             if (metricName === 'power') {
@@ -1428,13 +1430,7 @@ class Brain {
      */
     power(filter=[], relative = false) {
 
-            let voltage;
-            voltage = this.removeDCOffset(this.buffers.voltage)
-            if (Array.isArray(filter) && filter.length === 2){
-                voltage = this.bandpass(voltage,filter[0],filter[1])
-            }
-        
-
+            let voltage = this.getVoltage(false,filter);
             let power = new Array(Object.keys(this.eegCoordinates).length);
             voltage.forEach((channelData,ind) => {
                 power[ind] = channelData.reduce((acc, cur) => acc + (Math.pow(cur, 2) / 2), 0) / channelData.length
@@ -1452,13 +1448,8 @@ class Brain {
      * @description Returns bandpower in the specified EEG band.
      */
     bandpower(band, filter,relative=true) {
-            let voltage;
-            
-            voltage = this.removeDCOffset(this.buffers.voltage)
-            if (Array.isArray(filter) && filter.length === 2){
-                voltage = this.bandpass(voltage,filter[0],filter[1])
-            }
 
+            let voltage =this.getVoltage(false,filter);
             let bandpower = new Array(Object.keys(this.eegCoordinates).length).fill(NaN);
             
             voltage.forEach((channelData,ind) => {
@@ -1478,18 +1469,40 @@ class Brain {
 
     /**
      * @ignore
-     * @method module:brainsatplay.Brain.bandpass
-     * @description Filters the passed EEG channel data between the specified low and high frequency values.
+     * @method module:brainsatplay.Brain.filter
+     * @description Filters the passed EEG channel data with the specified filters
      */
-    bandpass(data,lowFreq=0.1,highFreq=100){
-        let filterOrder = 128;
-        let firCalculator = new Fili.FirCoeffs();
-        let coeffs = firCalculator.bandpass({order: filterOrder, Fs: this.samplerate.estimate, F1: lowFreq, F2: highFreq});
-        let filter = new Fili.FirFilter(coeffs);
-        data.filter(channelData => channelData != [NaN])
-        let channels = bci.transpose(data);
-        channels = data.map(signal => filter.simulate(signal).slice(filterOrder));
-        data = bci.transpose(channels);
+    filter(data, filterArray){
+        let dataRed = data.filter(channelData => !isNaN(channelData[0]))
+        if (dataRed.length !== 0){
+            filters = filterArray;
+            filterArray.forEach((dict,ind) => {
+                if (dict.filter === 'notch'){
+                    filters[ind] = new Biquad('notch',parameters[ind].freq_notch,this.samplerate.estimate,Biquad.calcNotchQ(parameters[ind].freq_notch,1),0);
+                } else if (dict.filter === 'bandpass'){
+                    filters[ind] = new Biquad('bandpass',
+                    Biquad.calcCenterFrequency(parameters[ind].freq_low,parameters[ind].freq_high),
+                    this.samplerate.estimate,
+                    Biquad.calcBandpassQ(Biquad.calcCenterFrequency(parameters[ind].freq_low,parameters[ind].freq_high),Biquad.calcBandwidth(parameters[ind].freq_low,parameters[ind].freq_high),9.75),
+                    0);
+                }
+            })
+
+            dataRed.forEach((channelData,ind) => {
+                let wave_filtered = channelData
+                channelData.forEach((amp,i) => {
+                    filterArray.forEach((dict,ind) => {
+                        if (dict.filter === 'notch'){
+                            wave_filtered[i] = notch.applyFilter(channelData[i]);
+                        }
+                        else if (dict.filter === 'bandpass'){
+                            wave_filtered[i] = 4*filters[ind].applyFilter(filters[ind].applyFilter(filters[ind].applyFilter(filters[ind].applyFilter(wave_filtered[i])))); //Need to rescale the outputs for some reason but otherwise it's accurate
+                        }
+                    })
+                })
+                data[this.usedChannels[ind].index] = wave_filtered
+            })
+        }
         return data
     }
 
