@@ -35,6 +35,17 @@ function toggleUserControls(){
     }
 }
 
+// Access
+function toggleAccess(){
+    if (game.info.access == 'private'){
+        game.access('public')
+        document.getElementById('access-mode').innerHTML = 'Public Mode'
+    } else {
+        document.getElementById('access-mode').innerHTML = 'Private Mode'
+        game.access('private')
+    }
+}
+
   // Login
 async function toggleLoginScreen(){
     brainsatplay.showLogin = !brainsatplay.showLogin;
@@ -221,6 +232,7 @@ input:focus{
 }
 
 .form-container{
+    box-sizing: border-box;
     display: flex;
     position: fixed;
     justify-content:center;
@@ -320,6 +332,77 @@ input:focus{
     -webkit-transition: 0.5s ease-in-out;
 }
 
+/* Slider */
+  /* The switch - the box around the slider */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: calc(60px / 2);
+    height: calc(34px / 2);
+  }
+  
+  /* Hide default HTML checkbox */
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  /* The slider */
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: calc(26px / 2);
+    width: calc(26px / 2);
+    left: calc(4px / 2);
+    bottom: calc(4px / 2);
+    background-color: white;
+    -webkit-transition: .4s;
+    transition: .4s;
+  }
+  
+  input:checked + .slider {
+    background-color: #2196F3;
+  }
+  
+  input:focus + .slider {
+    box-shadow: 0 0 1px #2196F3;
+  }
+  
+  input:checked + .slider:before {
+    -webkit-transform: translateX(calc(26px / 2));
+    -ms-transform: translateX(calc(26px / 2));
+    transform: translateX(calc(26px / 2));
+  }
+  
+  .slider.round {
+    border-radius: 34px;
+  }
+  
+  .slider.round:before {
+    border-radius: 50%;
+  }
+
+  #connection-toggle {
+    width: 150px;
+}
+
+#access-switch{
+    margin-left: 10px;
+  }
+
     </style>
 
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
@@ -334,7 +417,7 @@ input:focus{
       <div id="controls-container">
       <div>
         <h3>Welcome <span id="username"></span>.</h3><p>You have been connected to <span id="gamename"></span>.</p>
-        <div id="access-mode-div" class="under-header-info">
+        <div id="access-mode-div">
         <p id="access-mode" class="small">Public Mode</p>
         <label id="access-switch" class="switch">
             <input type="checkbox" onchange="toggleAccess()" checked>
@@ -403,14 +486,6 @@ input:focus{
         </div>
     </div>
     `;
-    
-    // <h4>Play with Others</h4>
-    // <br/>
-    // <button id="connect-guest" class="tooltip" onclick="game.connect({guestaccess:true})">
-    //     Connect as Guest
-    //     <span class="tooltiptext"><p>Guest Access</p><hr/><p class="small">Users are assigned a random username.</p></span>
-    // </button> 
-    
     this.innerHTML = html
   }
 }
