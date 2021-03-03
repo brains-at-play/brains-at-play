@@ -46,7 +46,12 @@ function toggleAccess(){
     }
 }
 
-  // Login
+// Access
+function toggleConsent(type){
+    game.consent(type,!game.me.consent[type])
+}
+
+// Login
 async function toggleLoginScreen(){
     brainsatplay.showLogin = !brainsatplay.showLogin;
 
@@ -421,6 +426,20 @@ input:focus{
         <p id="access-mode" class="small">Public Mode</p>
         <label id="access-switch" class="switch">
             <input type="checkbox" onchange="toggleAccess()" checked>
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div id="access-mode-div">
+        <p id="access-mode" class="small">Consent to Send Game Data</p>
+        <label id="access-switch" class="switch">
+            <input type="checkbox" onchange="toggleConsent('game')">
+            <span class="slider round"></span>
+          </label>
+        </div>
+        <div id="access-mode-div">
+        <p id="access-mode" class="small">Consent to Send Raw Brain Data</p>
+        <label id="access-switch" class="switch">
+            <input type="checkbox" onchange="toggleConsent('raw')">
             <span class="slider round"></span>
           </label>
         </div>

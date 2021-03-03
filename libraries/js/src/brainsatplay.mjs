@@ -14,7 +14,6 @@ export {Game}
  */
 class Game {
     constructor(gameName = 'untitled') {
-        this.simulation = {}
         this.initialize()
         this.gameName = gameName;
         this.bluetooth = {
@@ -25,7 +24,13 @@ class Game {
             connected: false,
             channelNames: [],
         }
-        this.simulation.n = 0;
+
+        this.info = {
+            interfaces: 0,
+            brains: 0,
+            access: 'public',
+            simulated: 0,
+        }
     }
 
      /**
@@ -73,25 +78,9 @@ class Game {
             this.me = {
                 username: 'me',
                 index: undefined,
+                consent: {raw: false, game:false}
             };
         }
-
-        this.info = {
-            interfaces: undefined,
-            brains: undefined,
-            usernames: [],
-            access: 'public',
-            simulated: false
-        }
-
-        this.simulation.generate = false,
-        this.simulation.samplerate = 200, // samples/s
-        this.simulation.duration = 0.24, // s 
-        this.simulation.t = Date.now(),
-        this.simulation.parameters = {
-                frequency: [],
-                amplitudes: []
-            }
 
         this.metrics = {
             synchrony: {
@@ -168,23 +157,37 @@ class Game {
      */
 
     simulate(count, amplitudes,frequencies) {
+
+        if (amplitudes === undefined){
+            amplitudes = Array.from({length: count}, e => e = undefined)
+        }
+
+        if (frequencies === undefined){
+            frequencies = Array.from({length: count}, e => e = undefined)
+        }
+
         if (!this.bluetooth.connected){
-            this.add('me',undefined, this.simulation.samplerate,true) 
+            this.add('me',undefined, undefined,{
+                on: true,
+                duration: .24, // s
+                t: Date.now(),
+                frequencies: frequencies[0],
+                amplitudes: amplitudes[0]
+            }) 
         }
         for (let i = 0; i < count-1; i++) {
-            this.add('other' + (i+1),undefined, this.simulation.samplerate,true);
+            this.add('other' + (i+1), undefined, undefined,{
+                on: true,
+                duration: .24, // s
+                t: Date.now(),
+                frequencies: frequencies[i],
+                amplitudes: amplitudes[i]
+            });
         }
         this.getMyIndex()
         this.updateUsedChannels()
 
-        this.simulation.buffers = {
-            voltage: Array.from({length: count}, e => Array.from({length: this.usedChannels.length}, e => []),),
-            time: []
-        }
-        this.simulation.generate = true;
-        this.simulation.n = count;
-        this.simulation.parameters.frequencies = frequencies
-        this.simulation.parameters.amplitudes = amplitudes
+        this.info.simulated = count;
     }
 
     /**
@@ -192,8 +195,8 @@ class Game {
      * @method module:brainsatplay.Game.add
      * @description Add a brain to your game.
      */
-    add(id, channelNames, samplerate, simulated, access = 'public') {
-        let brain = new Brain(id,channelNames,samplerate,simulated)
+    add(id, channelNames, samplerate, simulationParams, access = 'public') {
+        let brain = new Brain(id,channelNames,samplerate,simulationParams)
         this.brains[access].set(id, brain)
         this.info.brains = this.brains[access].size
 
@@ -215,81 +218,23 @@ class Game {
         this.getMyIndex()
         this.updateUsedChannels()
     }
-    /**
-     * @ignore
-     * @method module:brainsatplay.Game.generateSignal
-     * @description Generate a complex sine wave.
-     */
-
-    generateSignal(amplitudes = [], frequencies = [], samplerate = 256, duration = 1, phaseshifts = new Array(amplitudes.length).fill(0)) {
-        let al = amplitudes.length;
-        let fl = frequencies.length;
-        let pl = phaseshifts.length;
-
-        if (al !== fl || fl !== pl) {
-            console.error('Amplitude array, frequency array, and phaseshift array must be of the same length.')
-        }
-
-        let signal = new Array(Math.round(samplerate * duration)).fill(0)
-
-        frequencies.forEach((frequency, index) => {
-            for (let point = 0; point < samplerate * duration; point++) {
-                signal[point] += amplitudes[index] * Math.sin(2 * Math.PI * frequency * (point + phaseshifts[index]) / samplerate)
-            }
-        })
-
-        signal = signal.map(point => point/fl)
-
-        return signal
-    }
-
-    /**
-     * @ignore
-     * @method module:brainsatplay.Game.generateVoltageStream
-     * @description Generate a synthetic voltage signal for each synthetic brain in the game.
-     */
-    generateVoltageStream() {
-        let userInd = 0
-        let n = 5
-        let freqs;
-        let amps;
-        this.brains[this.info.access].forEach((user) => {
-            if (user.simulated || !this.bluetooth.connected){
-                user.channelNames.forEach((channelName) => {
-                    // Generate frequencies if none are given by the user
-                    if (this.simulation.parameters.frequencies === undefined){
-                        freqs = Array.from({length: n}, e => Math.random() * 50)
-                    } else {
-                        freqs = this.simulation.parameters.frequencies[userInd]
-                    }
-
-                    // Generate amplitudes if none are given by the user
-                    if (this.simulation.parameters.amplitudes === undefined){
-                        amps = Array(n).fill(100)
-                    } else {
-                        amps = this.simulation.parameters.amplitudes[userInd]
-                    }
-                    let samples = this.generateSignal(amps, freqs, user.samplerate.default, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
-                    user.loadData({signal:[samples], time:Array(samples.length).fill(Date.now()),electrode:user.channelNames.indexOf(channelName)})
-                })
-            }
-            userInd++
-        })
-    }
 
     /**
      * @method module:brainsatplay.Game.update
      * @description Update the game by (1) generating synthetic voltage streams, (2) broadcasting your data to other clients, (3) updating the Websocket connetion status, (4) logging any update messages from the Websocket connection, and (5) updating the Session object for any ongoing experiments. Include in the animation loop of your front-end code.
      */
     update() {
-        // Generate signal if specified
-        if (this.simulation.generate) {
-            if ((Date.now() - this.simulation.t) > this.simulation.duration*1000) {
-                this.generateVoltageStream()
-                this.simulation.t = Date.now()
+        // Generate synthetic data if specified
+        this.brains[this.info.access].forEach((user) => {
+            if (user.simulation.on){
+                if ((Date.now() - user.simulation.t) > user.simulation.duration*1000) {
+                    user.generateVoltageStream()
+                    user.simulation.t = Date.now()
+                }
             }
-        }
+        })
 
+        // FreeEEG Update
         if (this.bluetooth.deviceType === 'freeEEG32'){
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
@@ -300,26 +245,22 @@ class Game {
                     }
                 })
                 if ((this.connection.status)) {
-                    let message = {
-                        destination: 'bci', 
-                        id: this.me.username,
-                    'data': {signal:data,time:[]}
+                    if (!this.me.consent.raw){
+                        this.send('bci',{signal:data,time:[]})
+
+                    } else {
+                        this.send('bci',{signal:[],time:[]})
                     }
-                    this.send('bci',message)
                 } else {
                     if (this.brains[this.info.access].get(this.me.username)){
-                    this.brains[this.info.access].get(this.me.username).loadData({signal:data,time:[]})
+                    this.brains[this.info.access].get(this.me.username).loadData({signal:data,time:[],consent:{raw:true,game:true}})
                     }
                 }
             }
         }
 
         // Broadcast Data
-        this.send('bci',{
-            destination: 'bci', 
-            id: this.me.username,
-        'data': {signal:[],time:[]}
-        })
+        this.send('bci',{signal:[],time:[]})
 
         // Update Websocket Status
         if (this.connection.ws !== undefined){
@@ -555,6 +496,22 @@ class Game {
         return type
     }
 
+        /**
+     * @method module:brainsatplay.Game.consent
+     * @description Consent to sending data through our servers.
+     */
+    consent(type, value){
+        if (type === undefined) {
+            return this.me.consent
+        } else {
+            if (value === undefined) {
+                return this.me.consent[type]
+            } else {
+                this.me.consent[type] = value
+            }
+        }
+    }
+
     /**
      * @async
      * @method module:brainsatplay.Game.connectBluetoothDevice
@@ -578,15 +535,14 @@ class Game {
                     if (this.connection.status) {
                         let data = new Array(me.numChannels)
                         data[r.electrode] = r.samples;
-                        let message = {
-                            destination: 'bci', 
-                            id: this.me.username,
-                        'data': {signal:[r.samples],time:[r.timestamp],electrode:r.electrode}
+                        if (this.me.consent.raw){
+                            this.send('bci',{signal:[r.samples],time:[r.timestamp],electrode:r.electrode})
+                        } else {
+                            this.send('bci',{signal:[],time:[]})
                         }
-                        this.send('bci',message)
                     } else {
                         if (this.brains[this.info.access].get(this.me.username)){
-                        this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode})
+                        this.brains[this.info.access].get(this.me.username).loadData({signal:[r.samples],time:Array(r.samples.length).fill(r.timestamp),electrode:r.electrode,consent:{raw:true,game:true}})
                         }
                     }
                 }
@@ -657,10 +613,8 @@ class Game {
      */
     commonBluetoothSetup(type){
         this.bluetooth.deviceType = type
-        let prevData = this.brains[this.info.access].get(this.me.username).data
         this.remove(this.me.username)
-        this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,false)
-        this.brains[this.info.access].get(this.me.username).data = prevData
+        this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,{on:false})
         this.updateBrainRoutine()
         this.bluetooth.connected = true;
     }
@@ -743,20 +697,18 @@ class Game {
                     let obj = JSON.parse(msg.data);
                     if (obj.destination === 'bci') {
                         if (this.brains[this.info.access].get(obj.id) !== undefined) {
-                            this.brains[this.info.access].get(obj.id).loadData(obj.data)
+                            this.brains[this.info.access].get(obj.id).loadData(obj)
                         }
                     } else if (obj.destination === 'init') {
                         if (obj.privateBrains) {
-                            this.add(obj.privateInfo.id, obj.privateInfo.channelNames, undefined,false, 'private')
+                            this.add(obj.privateInfo.id, obj.privateInfo.channelNames, undefined,{on:false}, 'private')
                         } else {
                             for (let newUser = 0; newUser < obj.nBrains; newUser++) {
                                 if (this.brains.public.get(obj.ids[newUser]) === undefined && obj.ids[newUser] !== undefined) {
-                                    this.add(obj.ids[newUser], obj.channelNames[newUser],undefined,false)
+                                    this.add(obj.ids[newUser], obj.channelNames[newUser],undefined,{on:false})
                                 }
                             }
                         }
-        
-                        this.simulation.generate = false;
                         this.updateUsedChannels()
                         if (obj.nInterfaces === undefined){
                             this.info.interfaces = 0;
@@ -769,7 +721,7 @@ class Game {
                         let update = obj.n;
                         // Only update if access matches
                         if (update === 1) {
-                            this.add(obj.id, obj.channelNames, undefined, false, obj.access)
+                            this.add(obj.id, obj.channelNames, undefined, {on:false}, obj.access)
                         } else if (update === -1) {
                             this.remove(obj.id, obj.access)
                         }
@@ -782,7 +734,7 @@ class Game {
                         let update = obj.n;
                         // Only update if access matches
                         if (update === 1) {
-                            this.add(obj.id, obj.channelNames, undefined, false, obj.access)
+                            this.add(obj.id, obj.channelNames, undefined, {on:false}, obj.access)
                         } else if (update === -1) {
                             this.remove(obj.id, obj.access)
                         }
@@ -810,7 +762,10 @@ class Game {
                             }
                         })
                     })
-                    this.simulate(this.simulation.n)
+                    this.info.brains = 0;
+                    this.info.interfaces = 0;
+                    this.info.access = "public"
+                    this.simulate(this.info.simulated)
                     this.getMyIndex()
                     this.setUpdateMessage({destination: 'closed'})
                 };
@@ -846,17 +801,29 @@ class Game {
             this.connection.ws.send(JSON.stringify({'destination': 'initializeBrains', 'public': this.info.access === 'public'}));
             this.setUpdateMessage({destination: 'opened'})
         } else if (command === 'bci'){
-            let reserved = ['voltage','time','electrode']
-            let me = this.brains[this.info.access].get(this.me.username)
-            if (me !== undefined){
-                Object.keys(me.data).forEach((key) => {
-                    if (!reserved.includes(key)){
-                        dict.data[key] = me.data[key]
-                    }
-                })
-                dict = JSON.stringify(dict)
-                this.connection.ws.send(dict)
+            dict.destination = 'bci';
+            dict.id = this.me.username;
+            dict.consent = this.me.consent;
+
+            if (this.me.consent.game){
+                let reserved = ['voltage','time','electrode','consent']
+                let me = this.brains[this.info.access].get(this.me.username)
+                if (me !== undefined){
+                    Object.keys(me.data).forEach((key) => {
+                        if (!reserved.includes(key)){
+                            dict[key] = me.data[key]
+                        }
+                    })
+                }
             }
+
+            if (!this.me.consent.raw){
+                dict.signal = [];
+                dict.time = [];
+            }
+                
+            dict = JSON.stringify(dict)
+            this.connection.ws.send(dict)
         }
     }
     }
@@ -1167,7 +1134,7 @@ class Game {
  */
 
 class Brain {
-    constructor(userId, channelNames, samplerate,simulated=false){
+    constructor(userId, channelNames, samplerate,simulationParams={on:false}){
         this.username = userId;
         this.eegCoordinates = eegCoordinates
         this.usedChannels = []
@@ -1179,11 +1146,17 @@ class Brain {
         } else {
             this.samplerate.default = 200;
         }
-        this.data = {}
-        this.simulated = simulated;
+
+        this.simulation = simulationParams
+
         this.blink.threshold = 500 // uV
         this.blink.duration = 50 // samples
         this.blink.lastBlink = 0;
+
+        this.cleared = {
+            raw: false,
+            game: false
+        }
 
         if (channelNames === undefined){
             channelNames = 'TP9,AF7,AF8,TP10,AUX' // Muse 
@@ -1205,20 +1178,25 @@ class Brain {
         })
 
         this.bufferSize = 1000 // Samples
-        this.buffers = {
-            voltage: Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
-                return []
-            } else {
-                return [NaN]
-            }}),
-            time: Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
-                return []
-            } else {
-                return [NaN]
-            }})
+        this.data = {
+            voltage: this.createBuffer(),
+            time: this.createBuffer()
         }
 
         this.initializeStorage()
+    }
+    /**
+     * @ignore
+     * @method module:brainsatplay.Game.createBuffer
+     * @description Initialize a buffer for all EEG coordinates.
+     */
+    
+    createBuffer(){
+        return Array.from(Object.keys(this.eegCoordinates), e => {if (this.channelNames.includes(e)){
+            return []
+        } else {
+            return [NaN]
+        }})
     }
 
     /**
@@ -1234,8 +1212,8 @@ class Brain {
             samples: 0,
             full: false,
             data: {
-                voltage: Array.from({length: Object.keys(this.eegCoordinates).length}, e => []),
-                time: Array.from({length: Object.keys(this.eegCoordinates).length}, e => [])
+                voltage: this.createBuffer(),
+                time: this.createBuffer()
             }
         }
     }
@@ -1248,69 +1226,149 @@ class Brain {
 
     loadData(data) {
 
-        let signal = data.signal
-        let time = data.time
+        console.log(data)
+        if ((data.consent !== undefined && data.consent.raw) || this.simulation.on){
+            this.cleared.raw = false;
+            let signal = data.signal
+            let time = data.time
 
-        // drop data if undefined or NaN
-        signal = signal.filter((arr) => {if (!arr.includes(undefined) && !arr.includes(NaN)){return arr}})
+            // drop data if undefined or NaN
+            signal = signal.filter((arr) => {if (!arr.includes(undefined) && !arr.includes(NaN)){return arr}})
 
-        signal.forEach((channelData, channel) => {
-            if (Array.isArray(channelData)) {
-                if (channelData.length > 0) {
-                    if (Object.keys(data).includes('electrode')){
-                        channel = data.electrode
-                    }
-                    // this.buffers.voltage[this.usedChannels[channel].index].splice(0,channelData.length)
-                    this.buffers.voltage[this.usedChannels[channel].index].push(...channelData);
-                    this.buffers.time[this.usedChannels[channel].index].push(...time);
+            signal.forEach((channelData, channel) => {
+                if (Array.isArray(channelData)) {
+                    if (channelData.length > 0) {
+                        if (Object.keys(data).includes('electrode')){
+                            channel = data.electrode
+                        }
+                        this.data.voltage[this.usedChannels[channel].index].push(...channelData);
+                        this.data.time[this.usedChannels[channel].index].push(...time);
 
-                    let tDiff = this.buffers.time[this.usedChannels[channel].index].length - this.bufferSize
-                    if (tDiff > 0){
-                        this.buffers.time[this.usedChannels[channel].index].splice(0,tDiff)
-                    }
+                        let tDiff = this.data.time[this.usedChannels[channel].index].length - this.bufferSize
+                        if (tDiff > 0){
+                            this.data.time[this.usedChannels[channel].index].splice(0,tDiff)
+                        }
 
-                    let vDiff = this.buffers.voltage[this.usedChannels[channel].index].length - this.bufferSize
-                    if (vDiff > 0){
-                        this.buffers.voltage[this.usedChannels[channel].index].splice(0,vDiff)
-                    }
+                        let vDiff = this.data.voltage[this.usedChannels[channel].index].length - this.bufferSize
+                        if (vDiff > 0){
+                            this.data.voltage[this.usedChannels[channel].index].splice(0,vDiff)
+                        }
 
-                    if (this.storage.store === true){
-                        let diff = this.storage.samples - this.storage.count[channel];
-                        if (diff > 0){
-                            let pushedData;
-                            let pushedTime;
-                            if (diff < channelData.length){
-                                pushedData = channelData.splice(0,diff)
-                                pushedTime = time.splice(0,diff)
-                            } else {
-                                pushedData = channelData
-                                pushedTime = time
+                        if (this.storage.store === true){
+                            let diff = this.storage.samples - this.storage.count[channel];
+                            if (diff > 0){
+                                let pushedData;
+                                let pushedTime;
+                                if (diff < channelData.length){
+                                    pushedData = channelData.splice(0,diff)
+                                    pushedTime = time.splice(0,diff)
+                                } else {
+                                    pushedData = channelData
+                                    pushedTime = time
+                                }
+                                this.storage.data.voltage[this.usedChannels[channel].index].push(...pushedData)
+                                this.storage.data.time.push(...pushedTime)
+                                this.storage.count[channel] += pushedData.length;
                             }
-                            this.storage.data.voltage[this.usedChannels[channel].index].push(...pushedData)
-                            this.storage.data.time.push(...pushedTime)
-                            this.storage.count[channel] += pushedData.length;
                         }
                     }
                 }
+            })
+
+            if (this.usedChannels.length > 0){
+                let timeElapsed = ((Math.max(...this.data.time[this.usedChannels[0].index]) - Math.min(...this.data.time[this.usedChannels[0].index]))/1000)
+                if (timeElapsed > 0){
+                    this.samplerate.estimate = Math.floor(this.data.time[this.usedChannels[0].index].length / timeElapsed)
+                } else {
+                    this.samplerate.estimate = Math.floor(this.samplerate.default)
+                }
             }
-        })
-
-
-        let arbitraryFields = Object.keys(data)
-        arbitraryFields = arbitraryFields.filter(e => !['signal','time','electrode'].includes(e));
-
-        arbitraryFields.forEach((field) =>{
-            this.data[field] = data[field]
-        })
-
-        if (this.usedChannels.length > 0){
-            let timeElapsed = ((Math.max(...this.buffers.time[this.usedChannels[0].index]) - Math.min(...this.buffers.time[this.usedChannels[0].index]))/1000)
-            if (timeElapsed > 0){
-                this.samplerate.estimate = Math.floor(this.buffers.time[this.usedChannels[0].index].length / timeElapsed)
-            } else {
-                this.samplerate.estimate = Math.floor(this.samplerate.default)
-            }
+        } else if (this.cleared.raw === false){
+            console.log('clearing')
+            this.data.voltage = this.createBuffer()
+            this.data.time = this.createBuffer()
+            this.cleared.raw = true
         }
+
+        if ((data.consent !== undefined && data.consent.game) || this.simulation.on){
+            this.cleared.game = false;
+            let arbitraryFields = Object.keys(data)
+            arbitraryFields = arbitraryFields.filter(e => !['signal','time','electrode'].includes(e));
+
+            arbitraryFields.forEach((field) =>{
+                this.data[field] = data[field]
+            })
+        } else if (this.cleared.game === false){
+            console.log('clearing')
+            let voltage = this.data.voltage
+            let time = this.data.time;
+            let electrode = this.data.electrode;
+            this.data = {
+                voltage:voltage,
+                time:time,
+                electrode:electrode
+            };
+            this.cleared.game = true
+        }
+    }
+
+        /**
+     * @ignore
+     * @method module:brainsatplay.Game.generateSignal
+     * @description Generate a complex sine wave.
+     */
+
+    generateSignal(amplitudes = [], frequencies = [], samplerate = 256, duration = 1, phaseshifts = new Array(amplitudes.length).fill(0)) {
+        let al = amplitudes.length;
+        let fl = frequencies.length;
+        let pl = phaseshifts.length;
+
+        if (al !== fl || fl !== pl) {
+            console.error('Amplitude array, frequency array, and phaseshift array must be of the same length.')
+        }
+
+        let signal = new Array(Math.round(samplerate * duration)).fill(0)
+
+        frequencies.forEach((frequency, index) => {
+            for (let point = 0; point < samplerate * duration; point++) {
+                signal[point] += amplitudes[index] * Math.sin(2 * Math.PI * frequency * (point + phaseshifts[index]) / samplerate)
+            }
+        })
+
+        signal = signal.map(point => point/fl)
+
+        return signal
+    }
+
+    /**
+     * @ignore
+     * @method module:brainsatplay.Game.generateVoltageStream
+     * @description Generate a synthetic voltage signal for each synthetic brain in the game.
+     */
+    generateVoltageStream() {
+        let userInd = 0
+        let n = 5
+        let freqs;
+        let amps;
+            if (this.simulation.on === true){
+                this.channelNames.forEach((channelName) => {
+                    // Generate frequencies if none are provided
+                    if (this.simulation.frequencies === undefined){
+                        freqs = Array.from({length: n}, e => Math.random() * 50)
+                    } else {
+                        freqs = this.simulation.frequencies
+                    }
+
+                    // Generate amplitudes if none are provided
+                    if (this.simulation.amplitudes === undefined){
+                        amps = Array(n).fill(100)
+                    } else {
+                        amps = this.simulation.amplitudes
+                    }
+                    let samples = this.generateSignal(amps, freqs, this.samplerate.default, this.simulation.duration, Array.from({length: freqs.length}, e => Math.random() * 2*Math.PI))
+                    this.loadData({signal:[samples], time:Array(samples.length).fill(Date.now()),electrode:this.channelNames.indexOf(channelName)})
+                })
+            }
     }
 
     /**
@@ -1320,7 +1378,7 @@ class Brain {
 
     getVoltage(normalize=false, filters=[{type:'notch',freq_notch:50},{type:'notch',freq_notch:60},{type:'bandpass',freq_low:1, freq_high: 50}]){
         
-        let voltage = this.removeDCOffset(this.buffers.voltage)
+        let voltage = this.removeDCOffset(this.data.voltage)
         if (Array.isArray(filters)){
             voltage = this.filter(voltage,filters)
         }
@@ -1535,7 +1593,7 @@ class Brain {
         sideChannels.forEach((channels,ind) => {
                 if (this.channelNames.includes(...channels)){
                     let channelInd = this.usedChannels[this.channelNames.indexOf(...channels)].index
-                    let buffer = this.buffers.voltage[channelInd]
+                    let buffer = this.data.voltage[channelInd]
                     let lastTwenty = buffer.slice(buffer.length-this.blink.duration)
                     let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
                     blinks[ind] = (max > this.blink.threshold) * (quality[channelInd] > 0)
@@ -1571,8 +1629,11 @@ class Brain {
      * @description Set the arbitrary data passed about this brain to other connected clients.
      */
     setData(dict){
+        let reserved = ['voltage','time','electrode','consent']
         Object.keys(dict).forEach(key => {
-            this.data[key] = dict[key]
+            if (!reserved.includes(key)){
+                this.data[key] = dict[key]
+            }
         })
     }
 }

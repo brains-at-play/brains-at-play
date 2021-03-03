@@ -7,7 +7,7 @@
   setup = () => {
 
     for (let i = 0; i < 50; i++){
-      colors.push(color(Math.random()*255,Math.random()*255,Math.random()*255))
+      colors.push(color(`hsl(${Math.random()*255}%,hsl(${Math.random()*100}%,hsl(${Math.random()*100}%`))
     }
 
       // P5 Setup
@@ -31,10 +31,10 @@
       let c;
       let usernames = game.getUsernames()
       let viewedChannels = game.usedChannels
-      // console.log(viewedChannels)
       usernames.forEach((username, ind) => {
        c = colors[ind]
-       if (ind === game.me.index){
+
+       if (username === game.me.username){
           c = color('#1cc5cd')
           c.setAlpha(200)
        } else {

@@ -19,7 +19,7 @@ function openDevices() {
 
   async function connectMuse(){
     await game.bluetooth.devices['muse'].connect()
-    game.connectBluetoothDevice('muse')
+    game.connectBluetoothDevice('muse').then(()=>closeDevices())
   }
   
   class DeviceCard extends HTMLElement {
@@ -180,12 +180,12 @@ function openDevices() {
             <span class="tooltiptext"><p>Connect a Muse Headband</p><hr/><p class="small">Connect your Muse headband over Bluetooth. Chrome only.</p></span>
         </button>
 
-        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32');">
+        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32').then(()=>closeDevices());">
             FreeEEG32 - 19 Channels
             <span class="tooltiptext"><p>Connect a 19-Channel FreeEEG32 Device</p><hr/><p class="small">Connect a 19-channel FreeEEG32 device over Serial. Chrome only.</p></span>
         </button>
 
-        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32',{A4:'Fp2',A24:'Fp1'});">
+        <button id="connect-muse" class="tooltip" onclick="game.connectBluetoothDevice('freeEEG32',{A4:'Fp2',A24:'Fp1'}).then(()=>closeDevices());">
             FreeEEG32 - 2 Channels
             <span class="tooltiptext"><p>Connect a 2-Channel FreeEEG32 Device</p><hr/><p class="small">Connect a 2-channel FreeEEG32 device over Serial. Chrome only.</p></span>
         </button>

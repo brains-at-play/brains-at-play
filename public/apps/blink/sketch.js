@@ -35,7 +35,7 @@ draw = () => {
     background(0);
     // Update Voltage Buffers
     game.update();
-  
+      
     // Get Voltage Amplitude
     noStroke()
 
