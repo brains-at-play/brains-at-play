@@ -391,7 +391,11 @@ class Game {
             if (this.brains[this.info.access].has(username)){
                 return this.brains[this.info.access].get(username).getMetric(metricName,relative,filter)              
             } else {
-                return this.brains[this.info.access].get(this.me.username).getMetric(metricName,relative,filter)              
+                if (this.brains[this.info.access].has(this.me.username)){
+                    return this.brains[this.info.access].get(this.me.username).getMetric(metricName,relative,filter);      
+                } else {
+                    return Array.from(Object.keys(this.eegCoordinates), e => [NaN])
+                }    
             }
         } 
     } else {

@@ -15,6 +15,11 @@ let c;
 let trace;
 let capture;
 let geolocation = {location: {lat:NaN,lng:NaN}};
+let mapToggle;
+let connectToggle;
+let disconnectToggle;
+let voltageBuffers =  Array.from({length: 2}, e => [])
+let maxBufferSize = 500;
 
 function preload() {
   mapimg = loadImage('https://api.mapbox.com/styles/v1/mapbox/dark-v9/static/' +
@@ -44,6 +49,23 @@ function setup() {
     capture = undefined;
     mapToggle.hide()
   });
+
+  connectToggle = createButton('Connect to Server');
+  disconnectToggle = createButton('Disconnect');
+  connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-100-connectToggle.height);
+  disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-100-disconnectToggle.height);
+  disconnectToggle.hide()
+  connectToggle.mousePressed(() => {
+    game.connect({'guestaccess': true})
+    disconnectToggle.show()
+    connectToggle.hide()
+});
+
+disconnectToggle.mousePressed(() => {
+    game.disconnect()
+    disconnectToggle.hide()
+    connectToggle.show()
+})
 }
 
 function draw() {
@@ -69,12 +91,14 @@ function draw() {
     usernames.splice(game.me.index, 1)
     let yourName = usernames[0]
     let you = game.brains[game.info.access].get(yourName)
-    let youV = you.getVoltage()[you.usedChannels[0].index]
+    let youV = you.getVoltage(true)[you.usedChannels[0].index]
     let me = game.brains[game.info.access].get(game.me.username)
-    let meV = me.getVoltage()[me.usedChannels[0].index]
+    let meV = me.getVoltage(true)[me.usedChannels[0].index]
+
+    // Push buffer values to the EEG trace
     trace.update(
-      trace.center[0] + meV[meV.length - 1] / 2,
-      trace.center[1] + youV[youV.length - 1] / 2
+      trace.center[0] + meV[meV.length - 1]*Math.min(windowWidth,windowHeight)/4,
+      trace.center[1] + youV[youV.length - 1]*Math.min(windowWidth,windowHeight)/4
     )
 
     // Image
@@ -105,6 +129,8 @@ windowResized = () => {
   resizeCanvas(windowWidth, windowHeight);
   trace.center = [windowWidth/2,windowHeight/2];
   mapToggle.position(windowWidth - 25 - mapToggle.width, windowHeight - 25 - mapToggle.height);
+  connectToggle.position(windowWidth-25-connectToggle.width, windowHeight-100-connectToggle.height);
+  disconnectToggle.position(windowWidth-25-disconnectToggle.width, windowHeight-100-disconnectToggle.height);
 }
 
 function translateMercatorToScreen(x, y, d) {
