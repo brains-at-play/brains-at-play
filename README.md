@@ -105,8 +105,13 @@ If you are having issues, please email Garrett Flynn at gflynn@usc.edu
 ### External Libraries Used
 #### JavaScript
 - [NPM](https://www.npmjs.com/) and [Node](https://nodejs.org/en/).
+- [eegpwa](https://github.com/moothyknight/eegpwa)
+  - Bandpass and notch filters
+  - FreeEEG32 Serial class
 - [bci.js](https://bci.js.org/)
+  - Bandpower function
 - [muse-js](https://github.com/urish/muse-js/tree/master/src)
+  - Muse BLE class
 - [Express](https://expressjs.com/)
 - [Webpack](https://webpack.js.org/)
 - [ws](https://www.npmjs.com/package/ws)
