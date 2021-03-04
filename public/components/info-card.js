@@ -23,10 +23,31 @@ function openInfo() {
 
   connectedCallback() {
     let name = this.getAttribute("name")
-    let author = this.getAttribute("author")
-    let website = this.getAttribute("website")
+    let attribution = JSON.parse(this.getAttribute("attribution"))
     let description = this.getAttribute("description")
     let links = JSON.parse(this.getAttribute("links"))
+    let attributionString = []
+
+    attribution.forEach((info,ind) => {
+      let str = [];
+      if (attribution.length != 1 && ind === attribution.length - 1){
+        str.push('and ')
+      } 
+
+      if (info.website !== undefined){
+        str.push(`<a href=${info.website} target="_blank">${info.author}</a>`)
+      } else {
+        str.push(`${info.author}`)
+      }
+      attributionString.push(str.join(''))
+    })
+
+    if (attribution.length > 2){
+      attribution = attributionString.join(', ')
+    } else {
+      attribution = attributionString.join(' ')
+    }
+
 
     let html = `
     <style>
@@ -129,7 +150,7 @@ function openInfo() {
       <i id="nav-arrow" class="arrow left"></i>
       </div>
         <h4>${name}</h4>
-        <p class="small">Created by <a href=${website} target="_blank">${author}</a>. See all examples <a href="https://brainsatplay.com/#game-nav" target="_blank">here</a></p>
+        <p class="small">Created by ${attribution}. See all examples <a href="https://brainsatplay.com/#game-nav" target="_blank">here</a>.</p>
         <p>${description}</p>
     `;
 
