@@ -1,7 +1,7 @@
 {
   "name": "brainsatplay",
-  "version": "0.0.1",
-  "description": "Enabling a BCI-accessible web",
+  "version": "0.0.3",
+  "description": "Brain-Responsive Web Apps with JavaScript",
   "main": "brainsatplay.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
