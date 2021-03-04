@@ -484,16 +484,18 @@ class Game {
      */
 
     access(type) {
-        if (type === undefined) {
-            type = this.info.access
-        } else {
+        if (type !== undefined) {
+            if (this.bluetooth.connected){
+                this.brains[type].set(this.me.username,this.brains[this.info.access].get(this.me.username))
+                this.brains[this.info.access].delete(this.me.username)
+            }
             this.info.access = type;
+            this.info.brains = this.brains[this.info.access].size
+            this.getMyIndex()
+            this.updateUsedChannels()
+            this.setUpdateMessage({destination: 'update'})
         }
-        this.info.brains = this.brains[this.info.access].size
-        this.getMyIndex()
-        this.updateUsedChannels()
-        this.setUpdateMessage({destination: 'update'})
-        return type
+        return this.info.access
     }
 
         /**
@@ -1225,8 +1227,6 @@ class Brain {
      */
 
     loadData(data) {
-
-        console.log(data)
         if ((data.consent !== undefined && data.consent.raw) || this.simulation.on){
             this.cleared.raw = false;
             let signal = data.signal
@@ -1284,7 +1284,6 @@ class Brain {
                 }
             }
         } else if (this.cleared.raw === false){
-            console.log('clearing')
             this.data.voltage = this.createBuffer()
             this.data.time = this.createBuffer()
             this.cleared.raw = true
@@ -1299,7 +1298,6 @@ class Brain {
                 this.data[field] = data[field]
             })
         } else if (this.cleared.game === false){
-            console.log('clearing')
             let voltage = this.data.voltage
             let time = this.data.time;
             let electrode = this.data.electrode;
