@@ -16,12 +16,12 @@ async def beginStream(BOARD, PORT, URL, LOGIN_DATA, GAME, ACCESS, DATA_STREAM, A
 
 async def main():
 
-    BOARD = 'CYTON_DAISY_BOARD' #'SYNTHETIC_BOARD' #'CYTON_DAISY_BOARD' 
+    BOARD = 'SYNTHETIC_BOARD' #'CYTON_DAISY_BOARD' 
     # Synthetic Stream: 'SYNTHETIC_BOARD'
     # OpenBCI Board: 'CYTON_DAISY_BOARD'
     # Neurosity Boards: 'NOTION_1_BOARD' or 'NOTION_2_BOARD'
 
-    PORT = '/dev/cu.usbserial-DM01N7AE' # None #'/dev/cu.usbserial-DM01N7AE'
+    PORT = None #'/dev/cu.usbserial-DM01N7AE'
     # Synthetic Stream: None
     # Mac: '/dev/cu.usbserial-________'
     # Windows: 'COM_'
@@ -30,14 +30,14 @@ async def main():
     # Local: 'http://localhost'
     # Deployed Game: 'https://brainsatplay.azurewebsites.net'
 
-    LOGIN_DATA = { 'guestaccess': True , 'guestId': 'cd13cb88-360b-4bad-b6ea-4170a9169867' }
+    LOGIN_DATA = { 'guestaccess': True }
     # Guests: { 'guestaccess': True, 'guestId': '********'}
     # Authenticated Users: { 'username': '********', 'password': '********' }
     
     GAME = 'brainstorm'
     # Current Games: template, brainstorm
 
-    ACCESS = 'private'
+    ACCESS = 'public'
     # Anyone Can Access Data (required to play games): 'public'
     # Only Interfaces with Same USERID Access Data: 'private'
 

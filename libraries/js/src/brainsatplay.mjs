@@ -418,6 +418,10 @@ class Game {
                         let x = xC[channel]
                         let y = yC[channel]
 
+                        let answer;
+                        if ((isNaN(x[0])) || (isNaN(y[0]))){
+                            answer = 0
+                        } else {
                         var shortestArrayLength = 0;
 
                         if (x.length === y.length) {
@@ -457,12 +461,13 @@ class Game {
                         var step2 = (shortestArrayLength * sum_x2) - (sum_x * sum_x);
                         var step3 = (shortestArrayLength * sum_y2) - (sum_y * sum_y);
                         var step4 = Math.sqrt(step2 * step3);
-                        var answer = step1 / step4;
+                        answer = step1 / step4;
 
                         if (!channelSynchrony[channel]) {
                             channelSynchrony[channel] = [];
                         }
-                        channelSynchrony[channel].push(answer)
+                    }
+                    channelSynchrony[channel].push(answer)
                     })
                 })
 
