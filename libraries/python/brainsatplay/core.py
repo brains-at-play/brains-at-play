@@ -43,14 +43,13 @@ class Brain(object):
     def passData(self,name,val):
         self.data_to_pass[name] = val
 
-    async def stream(self, url, login_data, game, access, data_stream, arbitraryEventFunction=None, board=None, port=None):
+    async def stream(self, url, login_data, game, access, consent, data_stream, arbitraryEventFunction=None, board=None, port=None):
 
         # Set default BCI message
         message = {
                     'destination': 'bci', 
-                    'id': self.id,
-                    'data': {}
-            }
+                    'id': self.id            
+                    }
 
         # Initialize stream based on data formats
         for item in data_stream:
@@ -58,11 +57,11 @@ class Brain(object):
                 self.connect(board=board,port=port)
                 self.board.start_stream(num_samples=450000)
                 self.start_time = time.time()
-                message['data']['signal'] = None
-                message['data']['time'] = None
+                message['signal'] = None
+                message['time'] = None
             else:
                 self.data_to_pass[item] = None
-                message['data'][item] = None
+                message[item] = None
 
         # Authenticate
         if url[-1] == '/':
@@ -122,8 +121,7 @@ class Brain(object):
 
                     message = {
                             'destination': 'bci', 
-                            'id': self.id,
-                            'data': {}
+                            'id': self.id
                     }
 
                     for item in data_stream:
@@ -142,15 +140,18 @@ class Brain(object):
                             for entry in data:
                                 pass_data.append((entry).tolist())
                                 
-                            message['data']['signal'] = pass_data
-                            message['data']['time'] = t.tolist()
+                            message['signal'] = pass_data
+                            message['time'] = t.tolist()
 
                         else:
                             arbitraryEventFunction(self)
                             if (self.data_to_pass[item] != None):
-                                message['data'][item] = self.data_to_pass[item]
+                                message[item] = self.data_to_pass[item]
                                 self.data_to_pass[item] = None
-                    
+
+                        message['consent'] = consent
+
+
                     message = json.dumps(message, separators=(',', ':'))
                     
                     # (Re)Open Websocket Connection

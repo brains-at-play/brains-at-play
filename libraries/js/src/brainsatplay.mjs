@@ -413,15 +413,12 @@ class Game {
                 edgesArray.forEach((edge) => {
                     let xC = this.brains[this.info.access].get(edge[0]).getVoltage();
                     let yC = this.brains[this.info.access].get(edge[1]).getVoltage();
+                    
                     this.usedChannelNames.forEach((_,ind) => {
                         let channel = this.usedChannels[ind].index
                         let x = xC[channel]
                         let y = yC[channel]
 
-                        let answer;
-                        if ((isNaN(x[0])) || (isNaN(y[0]))){
-                            answer = 0
-                        } else {
                         var shortestArrayLength = 0;
 
                         if (x.length === y.length) {
@@ -461,12 +458,11 @@ class Game {
                         var step2 = (shortestArrayLength * sum_x2) - (sum_x * sum_x);
                         var step3 = (shortestArrayLength * sum_y2) - (sum_y * sum_y);
                         var step4 = Math.sqrt(step2 * step3);
-                        answer = step1 / step4;
+                        var answer = step1 / step4;
 
                         if (!channelSynchrony[channel]) {
                             channelSynchrony[channel] = [];
                         }
-                    }
                     channelSynchrony[channel].push(answer)
                     })
                 })
@@ -475,10 +471,10 @@ class Game {
                     return channelData.reduce((a, b) => a + b, 0) / channelData.length
                 })
             } else {
-                return new Array(Object.keys(this.eegCoordinates).length).fill(0)
+                return Array.from({length: Object.keys(this.eegCoordinates).length}, e => 0)
             }
         } else {
-            return new Array(Object.keys(this.eegCoordinates).length).fill(0);
+            return Array.from({length: Object.keys(this.eegCoordinates).length}, e => 0)
         }
     }
 
@@ -659,15 +655,13 @@ class Game {
         
         let connection;
         let cookies;
-
-        if (type==='interfaces'){
+        
+        if (this.bluetooth.connected){
+            type = 'bidirectional';
+            cookies = [this.me.username,type,this.gameName,this.info.access,...this.bluetooth.channelNames.split(',')]
+        } else {
+            type = 'interfaces';
             cookies = [this.me.username, type, this.gameName]
-        } else if (type==='bidirectional') {
-            if (this.bluetooth.connected){
-                cookies = [this.me.username,type,this.gameName,this.info.access,...this.bluetooth.channelNames.split(',')]
-            } else {
-                cookies = [this.me.username,type,this.gameName,this.info.access,null]
-            }
         }
 
         if (this.url.protocol === 'http:') {
@@ -792,7 +786,7 @@ class Game {
 
         let resDict;
         resDict = await this.login(dict, url)
-        this.establishWebsocket('bidirectional')
+        this.establishWebsocket()
         return resDict
     }
 
