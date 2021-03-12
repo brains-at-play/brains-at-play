@@ -33,7 +33,7 @@ draw = () => {
     game.update();
   
     // Get Voltage Amplitude
-    let brain = game.brains[game.info.access].get(game.me.username)
+    let brain = game.getBrain(game.me.username)
      if (brain !== undefined){
     let voltage = brain.getVoltage();
 

@@ -1,8 +1,8 @@
 import muse from "muse-js";
 import bci from "bcijs";
-import Fili from 'fili';
-import {eeg32} from '/libraries/js/eeg32.mjs';
-import {Biquad} from '/libraries/js/biquad.mjs';
+import {eeg32} from './hardware/eeg32.mjs';
+import {eegCoordinates} from './data/coordinates.mjs'; 
+import {Biquad} from './processing/biquad.mjs';
 
 /** @module brainsatplay */
 
@@ -13,14 +13,19 @@ export {Game}
  * @description Manage game data.
  */
 class Game {
-    constructor(gameName = 'untitled') {
+    constructor(name) 
+    {
         this.initialize()
-        this.gameName = gameName;
+        // this.settings = settings;
+        this.name = name // this.settings.name;
+
+        this.callbacks = {}
+
         this.bluetooth = {
             devices: {
                 'muse': new muse.MuseClient()
             },
-            deviceType: false,
+            device: false,
             connected: false,
             channelNames: [],
         }
@@ -31,6 +36,7 @@ class Game {
             access: 'public',
             simulated: 0,
         }
+        // this.simulate(this.settings.players.teams.names.length*this.settings.players.teams.size)
     }
 
      /**
@@ -89,6 +95,8 @@ class Game {
             }
         }
 
+        this.data = {}
+
         this.initializeSession()
         this.setUpdateMessage()
     }
@@ -96,11 +104,13 @@ class Game {
     /**
      * @method module:brainsatplay.Game.newGame
      * @description Switch to a new game.
+     * @param name {string} Name of the new game.
+     * @param settings {dict} The settings of the game.
      */
 
-    newGame(name){
+    newGame(name,){//settings={}){
       this.initialize()
-      this.gameName = name;
+      this.name = name;
     }
 
     /**
@@ -184,10 +194,9 @@ class Game {
                 amplitudes: amplitudes[i]
             });
         }
+        this.info.simulated = count;
         this.getMyIndex()
         this.updateUsedChannels()
-
-        this.info.simulated = count;
     }
 
     /**
@@ -235,7 +244,7 @@ class Game {
         })
 
         // FreeEEG Update
-        if (this.bluetooth.deviceType === 'freeEEG32'){
+        if (this.bluetooth.device === 'freeEEG32'){
             let me = this.brains[this.info.access].get(this.me.username)
             if (me !== undefined) {
                 let data = new Array(this.bluetooth.adcNames.length)
@@ -259,8 +268,17 @@ class Game {
             }
         }
 
+        // // Update Data
+        // let me = this.brains[this.info.access].get(this.me.username)
+        // if (me !== undefined){
+        //     for (const [key, callback] of Object.entries(this.settings.data.local.player.game)) {
+        //         me.data[key] = callback()
+        //     }
+        // }
+
         // Broadcast Data
         this.send('bci',{signal:[],time:[]})
+
 
         // Update Websocket Status
         if (this.connection.ws !== undefined){
@@ -270,6 +288,16 @@ class Game {
         this.setUpdateMessage()
         this.updateSession()
     }
+
+    /**
+     * @method module:brainsatplay.Game.getBrain
+     * @description Returns the specified brain.
+     * @param username {string} The user to return the brain of.
+     */
+    getBrain(username) {
+        return this.brains[this.info.access].get(username)
+    }
+
     /**
      * @method module:brainsatplay.Game.getVoltage
      * @description Return the voltage buffer for the specified user.
@@ -339,13 +367,13 @@ class Game {
             }
         } 
     } else {
-        return {channels: Array.from({length: Object.keys(game.eegCoordinates).length}, e => NaN), average: NaN}
+        return {channels: Array.from({length: Object.keys(this.eegCoordinates).length}, e => NaN), average: NaN}
     }
     // } else {
     //     if (this.connection === undefined){
     //         val = 0
     //     } else {
-    //         val = await this.request({game:this.gameName},'POST',metricName)
+    //         val = await this.request({game:this.name},'POST',metricName)
     //     }
     // }
     }
@@ -615,7 +643,7 @@ class Game {
      * @description A utility function to replace existing synthetic data with a Bluetooth stream.
      */
     commonBluetoothSetup(type){
-        this.bluetooth.deviceType = type
+        this.bluetooth.device = type
         this.remove(this.me.username)
         this.add(this.me.username, this.bluetooth.channelNames,this.bluetooth.samplerate,{on:false})
         this.updateBrainRoutine()
@@ -658,10 +686,10 @@ class Game {
         
         if (this.bluetooth.connected){
             type = 'bidirectional';
-            cookies = [this.me.username,type,this.gameName,this.info.access,...this.bluetooth.channelNames.split(',')]
+            cookies = [this.me.username,type,this.name,this.info.access,...this.bluetooth.channelNames.split(',')]
         } else {
             type = 'interfaces';
-            cookies = [this.me.username, type, this.gameName]
+            cookies = [this.me.username, type, this.name]
         }
 
         if (this.url.protocol === 'http:') {
@@ -767,6 +795,7 @@ class Game {
                     this.info.interfaces = 0;
                     this.info.access = "public"
                     this.simulate(this.info.simulated)
+                    // this.simulate(this.settings.players.teams.names.length*this.settings.players.teams.size)
                     this.getMyIndex()
                     this.setUpdateMessage({destination: 'closed'})
                 };
@@ -1150,7 +1179,7 @@ class Brain {
 
         this.simulation = simulationParams
 
-        this.blink.threshold = 500 // uV
+        this.blink.threshold = 400 // uV
         this.blink.duration = 50 // samples
         this.blink.lastBlink = 0;
 
@@ -1580,27 +1609,26 @@ class Brain {
      */
 
     blink() {
-        let leftChannels = ['Af7'] // Muse Left
-        let rightChannels = ['Af8'] // Muse Right
+        let leftChannels = ['Af7','Fp1'] // Left
+        let rightChannels = ['Af8','Fp2'] // Right
         let sideChannels = [leftChannels,rightChannels]
         let blinks = [false,false]
         let quality = this.contactQuality(this.blink.threshold,this.blink.duration)
 
         if (Date.now() - this.blink.lastBlink > 2*this.blink.duration){
+            let voltage = this.getVoltage()
         sideChannels.forEach((channels,ind) => {
                 if (this.channelNames.includes(...channels)){
                     let channelInd = this.usedChannels[this.channelNames.indexOf(...channels)].index
-                    let buffer = this.data.voltage[channelInd]
+                    let buffer = voltage[channelInd]
                     let lastTwenty = buffer.slice(buffer.length-this.blink.duration)
                     let max = Math.max(...lastTwenty.map(v => Math.abs(v)))
                     blinks[ind] = (max > this.blink.threshold) * (quality[channelInd] > 0)
                 }
             })
             this.blink.lastBlink = Date.now()
-        } else {
-            blinks = [false, false]
         }
-
+        
         return blinks
     }
 
@@ -1618,6 +1646,7 @@ class Brain {
             let aveAmp = buffer.reduce((a, b) => a + Math.abs(b), 0) / buffer.length
             quality[channelDict.index] = 1 - Math.max(0, Math.min(1, aveAmp / threshold))
         })
+
     return quality
     }
 
@@ -1633,90 +1662,4 @@ class Brain {
             }
         })
     }
-}
-
-
-/**
- * @constant
- * @description A dictionary of EEG coordinates included in the brainsatplay.js library. From [Automated cortical projection of EEG sensors: Anatomical correlation via the international 10–10 system]{@link https://doi.org/10.1016/j.neuroimage.2009.02.006} by Koessler et al. (2009)
- * @type {dict}
- */
-const eegCoordinates = {
-
-    Fp1: [-21.2, 66.9, 12.1],
-    Fpz: [1.4, 65.1, 11.3],
-    Fp2: [24.3, 66.3, 12.5],
-    Af7: [-41.7, 52.8, 11.3],
-    Af3: [-32.7, 48.4, 32.8],
-    Afz: [1.8, 54.8, 37.9],
-    Af4: [35.1, 50.1, 31.1],
-    Af8: [43.9, 52.7, 9.3],
-    F7: [-52.1, 28.6, 3.8],
-    F5: [-51.4, 26.7, 24.7],
-    F3: [-39.7, 25.3, 44.7],
-    F1: [-22.1, 26.8, 54.9],
-    Fz: [0.0, 26.8, 60.6],
-    F2: [23.6, 28.2, 55.6],
-    F4: [41.9, 27.5, 43.9],
-    F6: [52.9, 28.7, 25.2],
-    F8: [53.2, 28.4, 3.1],
-    Ft9: [-53.8, -2.1, -29.1],
-    Ft7: [-59.2, 3.4, -2.1],
-    Fc5: [-59.1, 3.0, 26.1],
-    Fc3: [-45.5, 2.4, 51.3],
-    Fc1: [-24.7, 0.3, 66.4],
-    Fcz: [1.0, 1.0, 72.8],
-    Fc2: [26.1, 3.2, 66.0],
-    Fc4: [47.5, 4.6, 49.7,],
-    Fc6: [60.5, 4.9, 25.5],
-    Ft8: [60.2, 4.7, -2.8],
-    Ft10: [55.0, -3.6, -31.0],
-    T7: [-65.8, -17.8, -2.9],
-    C5: [-63.6, -18.9, 25.8],
-    C3: [-49.1, -20.7, 53.2],
-    C1: [-25.1, -22.5, 70.1],
-    Cz: [0.8, -21.9, 77.4],
-    C2: [26.7, -20.9, 69.5],
-    C4: [50.3, -18.8, 53.0],
-    C6: [65.2, -18.0, 26.4],
-    T8: [67.4, -18.5, -3.4],
-    Tp7: [-63.6, -44.7, -4.0],
-    Cp5: [-61.8, -46.2, 22.5],
-    Cp3: [-46.9, -47.7, 49.7],
-    Cp1: [-24.0, -49.1, 66.1],
-    Cpz: [0.7, -47.9, 72.6],
-    Cp2: [25.8, -47.1, 66.0],
-    Cp4: [49.5, -45.5, 50.7],
-    Cp6: [62.9, -44.6, 24.4],
-    Tp8: [64.6, -45.4, -3.7],
-    P9: [-50.8, -51.3, -37.7],
-    P7: [-55.9, -64.8, 0.0],
-    P5: [-52.7, -67.1, 19.9],
-    P3: [-41.4, -67.8, 42.4],
-    P1: [-21.6, -71.3, 52.6],
-    Pz: [0.7, -69.3, 56.9],
-    P2: [24.4, -69.9, 53.5],
-    P4: [44.2, -65.8, 42.7],
-    P6: [54.4, -65.3, 20.2],
-    P8: [56.4, -64.4, 0.1],
-    P10: [51.0, -53.9, -36.5],
-    PO7: [-44.0, -81.7, 1.6],
-    PO3: [-33.3, -84.3, 26.5],
-    POz: [0.0, -87.9, 33.5],
-    PO4: [35.2, -82.6, 26.1],
-    PO8: [43.3, -82.0, 0.7],
-    O1: [-25.8, -93.3, 7.7],
-    Oz: [0.3, -97.1, 8.7],
-    O2: [25.0, -95.2, 6.2],
-
-    // Missing coordinates for Muse
-    Tp9: [-63.6, -44.7, -4.0], // Same as TP7
-    Tp10: [64.6, -45.4, -3.7], // Same as TP8
-
-
-    // Missing coordinates for FreeEEG32
-    T3: [-70.2, -21.3, -10.7],
-    T4: [71.9,-25.2,-8.2],
-    T5: [-61.5, -65.3, 1.1],
-    T6: [59.3, -67.6,  3.8],
 }

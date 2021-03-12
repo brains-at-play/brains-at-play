@@ -16,8 +16,7 @@
       resizeCanvas(windowWidth, windowHeight);
 
       // Brains@Play Setup
-      game = new brainsatplay.Game('template')
-      game.simulate(2);
+      game = new brainsatplay.Game(brainsatplay.settings)
     }
     
     draw = () => {
@@ -44,8 +43,8 @@
         strokeWeight(1)
         stroke(c)
         textSize(100);
-    
-        let brainData = game.brains[game.info.access].get(username).getVoltage(true)
+
+        let brainData = game.getBrain(username).getVoltage(true)
 
         viewedChannels.forEach((usedChannel,ind) => {
             let data = brainData[usedChannel.index]

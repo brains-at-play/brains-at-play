@@ -91,7 +91,7 @@ app.use(express.static(path.join(__dirname)));
 app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 
 
-let Game = require(path.join(__dirname, 'libraries','js','brainsatplay.js'))
+// let Game = require(path.join(__dirname, 'libraries','js','brainsatplay.js'))
 
 app.set("view engine", "ejs"); 
 app.set("views", __dirname + "/views"); 

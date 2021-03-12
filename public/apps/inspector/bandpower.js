@@ -52,7 +52,7 @@ draw = () => {
   game.update();
 
   // Get Brain Data
-  let brain = game.brains[game.info.access].get(game.me.username)
+  let brain = game.getBrain(game.me.username)
 
   if (brain !== undefined) {
     Object.keys(bandpowers).forEach((bandName, bandInd) => {

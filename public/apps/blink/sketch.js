@@ -35,6 +35,7 @@ draw = () => {
     background(0);
     // Update Voltage Buffers
     game.update();
+
       
     // Get Voltage Amplitude
     noStroke()
@@ -46,6 +47,7 @@ draw = () => {
     let [leftBlink, rightBlink] = brain.blink()
     let contactQuality = brain.contactQuality(brain.blink.threshold,brain.blink.duration)
 
+    // console.log(leftBlink, rightBlink)
     // Move Ball
     // right
     if (ballPos[0] < windowWidth-ballSize/2 - margin){

@@ -1,6 +1,6 @@
 {
   "name": "brainsatplay",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Brain-Responsive Web Apps with JavaScript",
   "main": "brainsatplay.js",
   "scripts": {

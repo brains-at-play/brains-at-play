@@ -1,0 +1,37 @@
+Metadata-Version: 2.1
+Name: brainsatplay
+Version: 0.0.7
+Summary: Stream brain data into the web
+Home-page: https://github.com/garrettmflynn
+Author: Garrett Flynn
+Author-email: gflynn@usc.edu
+License: MIT
+Description: # Brains@Play
+        Stream brain data into the web
+        
+        * [Installation](#Installation)
+        * [Support](#Support)
+        * [Acknowledgements](#Acknowledgments)
+        
+        ## Installation
+        
+        ```bash
+        pip install brainsatplay
+        ```
+        
+        ## Support
+        
+        If you are having issues, please email Garrett Flynn at gflynn@usc.edu
+        
+        ## Acknowledgments
+        **brainsatplay** was supported by [OpenBCI](https://openbci.com/) and [USC Visions and Voices](https://visionsandvoices.usc.edu/) for the production of [Livewire: A Stimulating Night of Neurotechnology](https://visionsandvoices.usc.edu/eventdetails/?event_id=33741435186601&s_type=&s_genre=) 
+        
+        
+        
+Keywords: BCI,neuroscience
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.8
+Description-Content-Type: text/markdown

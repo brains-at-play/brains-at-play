@@ -434,14 +434,14 @@ input:focus{
         <h3>Welcome <span id="username"></span>.</h3>
         <hr/>
         <div id="game-consent">
-        <p>Consent to Send Game Data</p>
+        <p>Consent to Broadcast Game Data</p>
         <label id="access-switch" class="switch">
             <input type="checkbox" onchange="toggleConsent('game')">
             <span class="slider round"></span>
           </label>
         </div>
         <div id="raw-consent">
-        <p>Consent to Send Raw Brain Data</p>
+        <p>Consent to Broadcast Raw Brain Data</p>
         <label id="access-switch" class="switch">
             <input type="checkbox" onchange="toggleConsent('raw')">
             <span class="slider round"></span>
@@ -514,7 +514,7 @@ input:focus{
                 </div>
             </div>
         </div>
-    </div>
+    </div> 
     `;
     this.innerHTML = html
   }
