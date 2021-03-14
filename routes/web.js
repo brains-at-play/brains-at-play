@@ -1,32 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const path = require("path");
-const fs = require('fs');
-const login = require("./login");
-
-let appsDir = {}
-fs.readdir(path.join('public','apps'), (err, files) => {
-  files = files.filter(file => !file.includes('.'))
-  files.forEach(file => {
-    let dir = 'public/apps/' + file
-    let info = fs.readFileSync(path.join('public', 'apps',file,'info.json'));
-    appsDir[file] = JSON.parse(info)
-    appsDir[file].path = dir
-    });
-  });
+const uuid = require('uuid');
 
 let routes = app => {
 
-//   router.get('/:name', function(req, res, next) {
-//     res.render(path.join(__dirname,'public','apps',req.params.name,'index'));
-// });
-
-
-router.get("/", function(req, res, next) {
-  return res.render("index", { apps: appsDir});
+router.get("/", (req, res, next) => {
+  return res.sendFile(path.join(`${__dirname}/../public/index.html`));
 });
 
-router.post("/login", login.login);
+router.post("/login", (req, res) => {
+      res.send({ result: 'OK', msg: uuid.v4() });
+});
 
   return app.use("/", router);
 };

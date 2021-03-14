@@ -1,12 +1,9 @@
 {
   "name": "brains-at-play",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack-dev-server --mode development --open",
-    "start": "webpack --mode production && node app.js",
-    "generate-docs": "jsdoc -c jsdoc.config.json"
+    "start": "node app.mjs"
   },
   "dependencies": {
     "bcijs": "^1.8.0",

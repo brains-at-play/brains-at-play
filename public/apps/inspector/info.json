@@ -1,9 +1,0 @@
-{
-    "name": "Electrode Inspector",
-    "author": "Brains@Play",
-    "website": "https://brainsatplay.com",
-    "description": "Inspect electrode signal quality using the brainsatplay software library.",
-    "links": {
-        "github": "https://github.com/brainsatplay/inspector"
-    }
-}

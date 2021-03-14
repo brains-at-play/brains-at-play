@@ -1,0 +1,229 @@
+import express from 'express';
+import debugLib from 'debug';
+const debug = debugLib('myexpressapp:server')
+import path from 'path';
+import favicon from 'serve-favicon';
+import bodyParser from 'body-parser';
+import cookieParser from 'cookie-parser';
+import cors from "cors"
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+import WebSocket from 'ws';
+
+// New Server Code
+import dataServerClass from './dataServer.mjs'; 
+let dataServer = new dataServerClass(['template'])
+
+// Settings
+let protocol = 'http';
+const url = 'localhost'
+var port = normalizePort(process.env.PORT || '8080');
+
+//
+// App
+//
+
+const app = express();
+app.use(cors()) // allow Cross-domain requests
+app.use(cookieParser())
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+//Listen to Port for HTTP Requests
+app.use(function(req, res, next) {
+  const validOrigins = [
+    `http://localhost`,
+    'http://localhost:8080',
+    'https://brainsatplay.azurewebsites.net',
+    'http://brainsatplay.azurewebsites.net',
+    'https://brainsatplay.com'
+  ];
+
+  const origin = req.headers.origin;
+  if (validOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods",
+      "GET, POST, PATCH, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
+// Set Routes
+import initRoutes from "./routes/web.js";
+initRoutes(app);
+
+// development error handler
+if (app.get('env') === 'development') {
+  app.use(function(err, req, res, next) {
+    res.status(err.status || 500);
+    console.log('error')
+  });
+}
+
+// production error handler
+app.use(function(err, req, res, next) {
+  res.status(err.status || 500);
+  console.log('error')
+});
+
+// Static Middleware
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname)));
+app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+
+// Setting the port
+app.set('port', port);
+
+//
+// Server
+//
+import http from 'http'; 
+let server = http.createServer(app);  
+
+// Websocket
+let wss;
+wss = new WebSocket.Server({ clientTracking: false, noServer: true });
+
+function getCookie(req,name) {
+  const value = `; ${req.headers.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+//Authentication
+server.on('upgrade', function (request, socket, head) {
+    let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
+    let appname;
+    
+    if (!username) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+
+    wss.handleUpgrade(request, socket, head, function (ws) {
+      wss.emit('connection', ws, {}, request);
+    });
+});
+
+wss.on('connection', function (ws, msg, request) {
+
+  
+  let userId;
+  let type;
+  let channelNames
+  let access;
+  let game;
+  let _type;
+
+    // Track Connections on the Server
+    if (getCookie(request, 'username') != undefined) {
+      username =  getCookie(request, 'username')
+      type = getCookie(request, 'connectionType')
+      access = getCookie(request, 'access')
+      channelNames = getCookie(request, 'channelNames')
+      appname = getCookie(request, 'appname')
+    } else if (request.headers['sec-websocket-protocol'] != undefined) {
+      let protocols = request.headers['sec-websocket-protocol'].split(', ')
+      username =  protocols[0]
+      type = protocols[1]
+      appname = protocols[2]
+      if (type==='bidirectional'){
+        access = protocols[3]
+        channelNames = []
+        for (let i = 4; i < protocols.length; i++){
+        channelNames.push(protocols[i])
+        }
+        channelNames = channelNames.join(',')
+      }
+    } else {
+      ws.send('No userID Cookie (Python) or Protocol (JavaScript) specified')
+    }
+
+    dataServer.addUser(username,appname,ws,availableProps=[])
+
+    // Manage specific messages from clients
+    ws.on('message', function (s) {
+      let o = JSON.parse(s);
+      dataServer.processUserCommand(o)
+    });
+
+    ws.on('close', function () {
+    });
+});
+
+// error handlers
+
+server.listen(parseInt(port), () => {
+  console.log('listening on *:' + port);
+});
+
+server.on('error', onError);
+server.on('listening', onListening);
+
+console.log(`Server is running on ${protocol}://${url}:${port}`)
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
