@@ -10,6 +10,9 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 import WebSocket from 'ws';
+import dotenv from 'dotenv';
+import mongodb from 'mongodb'
+dotenv.config();
 
 // New Server Code
 import dataServerClass from './dataServer.mjs'; 
@@ -29,6 +32,13 @@ app.use(cors()) // allow Cross-domain requests
 app.use(cookieParser())
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Database Setup
+mongodb.MongoClient.connect(process.env.MONGO_URI, { useUnifiedTopology: true })
+  .then(client => {
+    app.set('mongo_client', client);
+    console.log('Connected to Database')
+  })
 
 //Listen to Port for HTTP Requests
 app.use(function(req, res, next) {
@@ -112,34 +122,29 @@ server.on('upgrade', function (request, socket, head) {
 
 wss.on('connection', function (ws, msg, request) {
 
-  
-  let userId;
-  let type;
-  let channelNames
-  let access;
-  let game;
-  let _type;
+  let username;
+  let appname;
 
     // Track Connections on the Server
     if (getCookie(request, 'username') != undefined) {
       username =  getCookie(request, 'username')
-      type = getCookie(request, 'connectionType')
-      access = getCookie(request, 'access')
-      channelNames = getCookie(request, 'channelNames')
+      // type = getCookie(request, 'connectionType')
+      // access = getCookie(request, 'access')
+      // channelNames = getCookie(request, 'channelNames')
       appname = getCookie(request, 'appname')
     } else if (request.headers['sec-websocket-protocol'] != undefined) {
       let protocols = request.headers['sec-websocket-protocol'].split(', ')
       username =  protocols[0]
-      type = protocols[1]
-      appname = protocols[2]
-      if (type==='bidirectional'){
-        access = protocols[3]
-        channelNames = []
-        for (let i = 4; i < protocols.length; i++){
-        channelNames.push(protocols[i])
-        }
-        channelNames = channelNames.join(',')
-      }
+      // type = protocols[1]
+      appname = protocols[1]//[2]
+      // if (type==='bidirectional'){
+      //   access = protocols[3]
+      //   channelNames = []
+      //   for (let i = 4; i < protocols.length; i++){
+      //   channelNames.push(protocols[i])
+      //   }
+      //   channelNames = channelNames.join(',')
+      // }
     } else {
       ws.send('No userID Cookie (Python) or Protocol (JavaScript) specified')
     }
