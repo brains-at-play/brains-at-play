@@ -107,9 +107,8 @@ function getCookie(req,name) {
 //Authentication
 server.on('upgrade', function (request, socket, head) {
     let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
-    let appname;
-    
-    if (!username) {
+    let password = getCookie(request, 'password') | request.headers['sec-websocket-protocol'].split(', ')[1];
+    if (auth.check({username,password}) !== 'OK') {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;
@@ -122,32 +121,8 @@ server.on('upgrade', function (request, socket, head) {
 
 wss.on('connection', function (ws, msg, request) {
 
-  let username;
-  let appname;
-
-    // Track Connections on the Server
-    if (getCookie(request, 'username') != undefined) {
-      username =  getCookie(request, 'username')
-      // type = getCookie(request, 'connectionType')
-      // access = getCookie(request, 'access')
-      // channelNames = getCookie(request, 'channelNames')
-      appname = getCookie(request, 'appname')
-    } else if (request.headers['sec-websocket-protocol'] != undefined) {
-      let protocols = request.headers['sec-websocket-protocol'].split(', ')
-      username =  protocols[0]
-      // type = protocols[1]
-      appname = protocols[1]//[2]
-      // if (type==='bidirectional'){
-      //   access = protocols[3]
-      //   channelNames = []
-      //   for (let i = 4; i < protocols.length; i++){
-      //   channelNames.push(protocols[i])
-      //   }
-      //   channelNames = channelNames.join(',')
-      // }
-    } else {
-      ws.send('No userID Cookie (Python) or Protocol (JavaScript) specified')
-    }
+  let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
+  let appname = getCookie(request, 'appname') | request.headers['sec-websocket-protocol'].split(', ')[2];
 
     dataServer.addUser(username,appname,ws,availableProps=[])
 

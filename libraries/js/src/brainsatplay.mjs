@@ -679,17 +679,17 @@ class Game {
      * @description Establish a Websocket connection. Sets the connection parameters.
      */
     
-    establishWebsocket(type='interfaces'){
+    establishWebsocket(auth={'guestaccess': true}, type='interfaces'){
         
         let connection;
         let cookies;
         
         if (this.bluetooth.connected){
             type = 'bidirectional';
-            cookies = [this.me.username,type,this.name,this.info.access,...this.bluetooth.channelNames.split(',')]
+            cookies = [auth,type,this.name,this.info.access,...this.bluetooth.channelNames.split(',')]
         } else {
             type = 'interfaces';
-            cookies = [this.me.username, type, this.name]
+            cookies = [auth, type, this.name]
         }
 
         if (this.url.protocol === 'http:') {
@@ -811,11 +811,11 @@ class Game {
      * @param dict {string} Server URL.
      */
 
-    async connect(dict = {'guestaccess': true}, url = 'https://brainsatplay.azurewebsites.net/') {
+    async connect(auth = {'guestaccess': true}, url = 'https://brainsatplay.azurewebsites.net/') {
 
         let resDict;
-        resDict = await this.login(dict, url)
-        this.establishWebsocket()
+        resDict = await this.login(auth, url)
+        this.establishWebsocket(auth)
         return resDict
     }
 
