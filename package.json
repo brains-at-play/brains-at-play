@@ -3,7 +3,10 @@
   "version": "0.0.4",
   "private": true,
   "scripts": {
-    "start": "node app.mjs"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "webpack-dev-server --mode development --open",
+    "start": "webpack --mode production && node app.mjs",
+    "generate-docs": "jsdoc -c jsdoc.config.json"
   },
   "dependencies": {
     "bcijs": "^1.8.0",
@@ -39,6 +42,7 @@
     "node-fetch-polyfill": "^2.0.6",
     "os-browserify": "^0.3.0",
     "process": "^0.11.10",
+    "regenerator-runtime": "^0.13.7",
     "script-loader": "^0.7.2",
     "serve-favicon": "^2.5.0",
     "stream-browserify": "^3.0.0",

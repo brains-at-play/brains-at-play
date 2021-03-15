@@ -6,21 +6,14 @@ const dbName = "brainsatplay";
 var SALT_FACTOR = 5;
 
 // req.app.get('mongo_client')
-module.exports.login = async (auth, mongodb) => {
+module.exports.check = async (auth, mongodb) => {
     let username = auth.username
     let password = auth.password
-
-    await bcrypt.genSalt(SALT_FACTOR, function(err, salt) {
-      bcrypt.hash(password, salt, null, function(err, hash) {
-        console.log(hash)
-      });
-    });
     const db = mongodb.db(dbName);
     let profile;
     let msg;
     let dict;
 
-    console.log(auth)
     if (password === ''){
         if (username !== ''){
         let numDocs = await db.collection('profiles').find({ username: username }).count();
@@ -34,7 +27,7 @@ module.exports.login = async (auth, mongodb) => {
         dict = { result: 'OK', msg: username}
         }
     } else {
-    if (username === '') {
+    if (username === undefined) {
         dict = { result: 'incomplete', msg: 'username not defined' }
     } else {
       profile = await db.collection('profiles').findOne({ $or: [ { username: username }, { email: username } ] })      

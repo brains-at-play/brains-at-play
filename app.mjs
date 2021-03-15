@@ -16,6 +16,8 @@ dotenv.config();
 
 // New Server Code
 import dataServerClass from './dataServer.mjs'; 
+import auth from './middleware/auth.js'; 
+
 let dataServer = new dataServerClass(['template'])
 
 // Settings
@@ -36,7 +38,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Database Setup
 mongodb.MongoClient.connect(process.env.MONGO_URI, { useUnifiedTopology: true })
   .then(client => {
-    app.set('mongo_client', client);
+    app.set('mongodb', client);
     console.log('Connected to Database')
   })
 
@@ -105,36 +107,39 @@ function getCookie(req,name) {
 }
 
 //Authentication
-server.on('upgrade', function (request, socket, head) {
-    let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
-    let password = getCookie(request, 'password') | request.headers['sec-websocket-protocol'].split(', ')[1];
-    let res = auth.check({username,password})
-    console.log(res)
+server.on('upgrade', async (request, socket, head) => {
+    let username = getCookie(request, 'username') || request.headers['sec-websocket-protocol'].split('username')[1].split(',')[0]
+    let password = getCookie(request, 'password') || request.headers['sec-websocket-protocol'].split('password')[1].split(',')[0]
+    let appname = getCookie(request, 'appname') | request.headers['sec-websocket-protocol'].split('appname')[1].split(',')[0]
+
+    let res = await auth.check({username,password},app.get('mongodb'))
     if (res.result !== 'OK') {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;
     }
 
+    username = res.msg
     wss.handleUpgrade(request, socket, head, function (ws) {
-      wss.emit('connection', ws, {}, request);
+      wss.emit('connection', ws, {username,appname}, request);
     });
 });
 
 wss.on('connection', function (ws, msg, request) {
 
-  let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
-  let appname = getCookie(request, 'appname') | request.headers['sec-websocket-protocol'].split(', ')[2];
+  let username = msg.username
+  let appname = msg.appname
 
-    dataServer.addUser(username,appname,ws,availableProps=[])
+    dataServer.addUser(username,appname,ws)
 
     // Manage specific messages from clients
     ws.on('message', function (s) {
       let o = JSON.parse(s);
-      dataServer.processUserCommand(o)
+      dataServer.processUserCommand(username,o.msg)
     });
 
     ws.on('close', function () {
+      console.log('closing')
     });
 });
 
