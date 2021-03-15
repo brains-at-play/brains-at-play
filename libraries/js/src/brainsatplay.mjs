@@ -43,7 +43,7 @@ export default class brainsatplay {
 		password='',
 		access='public',
 		appname='',
-		remoteHostURL='https://brainsatplay.azurewebsites.net/',
+		remoteHostURL='http://localhost:8080',//https://brainsatplay.azurewebsites.net/',
 		localHostURL='http://127.0.0.1:8000'
 	) {
 		this.devices = [];
@@ -176,6 +176,7 @@ export default class brainsatplay {
 		let cookies = [];
 		cookies = [this.info.auth.username,this.info.auth.password,this.info.auth.appname];
 
+        console.log(this.info.auth.url)
 		if (this.info.auth.url.protocol === 'http:') {
             socket = new WebSocket(`ws://` + this.info.auth.url.hostname, cookies);
         } else if (this.auth.url.protocol === 'https:') {
@@ -185,15 +186,24 @@ export default class brainsatplay {
             return;
         }
 
-		socket.onmessage((e) => {
-		});
-		socket.onopen((e) => {
-		});
-		socket.onclose((e) => {
-		});
-		socket.onerror((e) => {
-			console.error(e.data);
-		});
+        socket.onerror = () => {
+            console.log('error')
+        };
+
+        socket.onopen = () => {
+            console.log('open')
+            socket.send({msg:'ping'})
+        };
+
+        socket.onmessage = (str) => {
+            let obj = JSON.parse(str);
+            console.log(obj.msg)
+        }
+
+        socket.onclose = (msg) => {
+            console.log('close')
+        }
+
 		return socket;
 	}
 

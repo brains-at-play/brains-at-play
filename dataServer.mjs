@@ -59,6 +59,8 @@ export default class dataServer { //Just some working concepts for handling data
         }
         else if(command[0] === 'subscribeToGame' > -1) {
             this.subscribeUserToGame(username,command[1]);
+        } else if(command[0] === 'ping') {
+            u.socket.send({msg:'pong'})
         }
 
     }

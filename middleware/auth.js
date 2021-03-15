@@ -19,6 +19,8 @@ module.exports.login = async (auth, mongodb) => {
     let profile;
     let msg;
     let dict;
+
+    console.log(auth)
     if (password === ''){
         if (username !== ''){
         let numDocs = await db.collection('profiles').find({ username: username }).count();

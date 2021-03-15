@@ -108,7 +108,9 @@ function getCookie(req,name) {
 server.on('upgrade', function (request, socket, head) {
     let username = getCookie(request, 'username') | request.headers['sec-websocket-protocol'].split(', ')[0];
     let password = getCookie(request, 'password') | request.headers['sec-websocket-protocol'].split(', ')[1];
-    if (auth.check({username,password}) !== 'OK') {
+    let res = auth.check({username,password})
+    console.log(res)
+    if (res.result !== 'OK') {
       socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
       socket.destroy();
       return;
